@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
-import { MapPin, Save, Navigation } from "lucide-react";
+import { Save, Navigation } from "lucide-react";
+import { useMap } from "react-leaflet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,10 +15,27 @@ const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer)
 const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
 const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), { ssr: false });
 
+
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  const isFirst = useRef(true);
+
+  useEffect(() => {
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
+    }
+    map.flyTo(center, map.getZoom());
+  }, [center[0], center[1]]);
+
+  return null;
+}
+
 export default function AdminLokasiPage() {
   const [setting, setSetting] = useState({ latitude: -6.2, longitude: 106.8, radiusMeter: 100, namaKlinik: "" });
   const [marker, setMarker] = useState<[number, number]>([-6.2, 106.8]);
   const [saving, setSaving] = useState(false);
+  const [locating, setLocating] = useState(false);
   const markerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -43,6 +61,28 @@ export default function AdminLokasiPage() {
     setSaving(false);
   }
 
+  function handleFindLocation() {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation tidak didukung browser ini");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setMarker([latitude, longitude]);
+        setSetting((prev) => ({ ...prev, latitude, longitude }));
+        toast.success("Lokasi ditemukan");
+        setLocating(false);
+      },
+      () => {
+        toast.error("Gagal mendapatkan lokasi. Periksa izin lokasi.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-gray-900">Lokasi Klinik</h1>
@@ -65,6 +105,7 @@ export default function AdminLokasiPage() {
             }}
           />
           <Circle center={marker} radius={setting.radiusMeter} pathOptions={{ color: "#059669", fillOpacity: 0.1 }} />
+          <MapUpdater center={marker} />
         </MapContainer>
       </Card>
 
@@ -103,6 +144,16 @@ export default function AdminLokasiPage() {
               <span className="text-sm text-gray-500">m</span>
             </div>
           </div>
+
+          <Button
+            onClick={handleFindLocation}
+            disabled={locating}
+            variant="outline"
+            className="w-full h-11"
+          >
+            <Navigation className="w-4 h-4 mr-2" />
+            {locating ? "Mencari..." : "Temukan Lokasi Saya"}
+          </Button>
 
           <Button
             onClick={handleSave}
