@@ -12,6 +12,8 @@ interface TodayData {
   waktuCheckout: string | null;
   status: string | null;
   menitTerlambat: number | null;
+  isOnLeave: boolean;
+  kategoriCuti: { id: string; kode: string; keterangan: string; warnaLabel: string } | null;
 }
 
 const statDefs = [
@@ -32,57 +34,103 @@ export default function KaryawanDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [todayRes, historyRes, leaveRes] = await Promise.all([
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+
+        const [todayRes, historyRes, leaveRes, scheduleRes, hariLiburRes] = await Promise.all([
           fetch("/api/attendance/today"),
           fetch("/api/attendance/history"),
           fetch("/api/leave"),
+          fetch("/api/schedule"),
+          fetch(`/api/hari-libur?year=${thisYear}&month=${thisMonth + 1}`),
         ]);
 
         const today: TodayData = await todayRes.json();
         const history = await historyRes.json();
         const leaves = await leaveRes.json();
+        const scheduleData = await scheduleRes.json();
+        const hariLiburData = await hariLiburRes.json();
 
         setTodayData(today);
-
-        const thisMonth = now.getMonth();
-        const thisYear = now.getFullYear();
 
         const hadir = (history.records || []).filter(
           (r: any) => new Date(r.tanggal).getMonth() === thisMonth
             && new Date(r.tanggal).getFullYear() === thisYear
+            && r.waktuCheckin != null
             && r.status === "TEPAT_WAKTU"
         ).length;
 
         const terlambat = (history.records || []).filter(
           (r: any) => new Date(r.tanggal).getMonth() === thisMonth
             && new Date(r.tanggal).getFullYear() === thisYear
+            && r.waktuCheckin != null
             && r.status === "TERLAMBAT"
         ).length;
 
-        const izin = (leaves.leaves || []).filter(
-          (l: any) => new Date(l.tanggalMulai).getMonth() === thisMonth
-            && new Date(l.tanggalMulai).getFullYear() === thisYear
-            && l.status === "APPROVED"
-        ).length;
+        let izin = 0;
+        for (const l of (leaves.leaves || []) as any[]) {
+          if (l.status !== "APPROVED") continue;
+          const mulai = new Date(l.tanggalMulai);
+          const akhir = new Date(l.tanggalAkhir);
+          const bulanMulai = mulai.getMonth();
+          const bulanAkhir = akhir.getMonth();
+          if (bulanMulai === thisMonth && mulai.getFullYear() === thisYear) {
+            const akhirBulan = new Date(thisYear, thisMonth + 1, 0);
+            const akhirRange = akhir < akhirBulan ? akhir : akhirBulan;
+            izin += Math.floor((akhirRange.getTime() - mulai.getTime()) / 86400000) + 1;
+          } else if (bulanAkhir === thisMonth && akhir.getFullYear() === thisYear) {
+            const awalBulan = new Date(thisYear, thisMonth, 1);
+            izin += Math.floor((akhir.getTime() - awalBulan.getTime()) / 86400000) + 1;
+          } else if (bulanMulai < thisMonth && bulanAkhir > thisMonth) {
+            const hariDalamBulan = new Date(thisYear, thisMonth + 1, 0).getDate();
+            izin += hariDalamBulan;
+          }
+        }
 
-        setStats({ hadir, terlambat, izin, alpha: 0 });
-      } catch (e) {
-        console.error(e);
+        const scheduleMap = new Map<string, any>((scheduleData.schedules || []).map((s: any) => [s.day, s]));
+        const holidaySet = new Set(
+          (hariLiburData.data || []).map((h: any) => new Date(h.tanggal).toISOString().split("T")[0])
+        );
+        const DAY_NAMES = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+
+        let hariKerja = 0;
+        for (let d = 1; d < now.getDate(); d++) {
+          const date = new Date(thisYear, thisMonth, d);
+          if (date.getDay() === 0) continue;
+          const dateStr = `${thisYear}-${String(thisMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          if (holidaySet.has(dateStr)) continue;
+          const dayName = DAY_NAMES[date.getDay()];
+          if (scheduleMap.get(dayName)?.isLibur) continue;
+          hariKerja++;
+        }
+
+        const alpha = Math.max(0, hariKerja - hadir - terlambat - izin);
+
+        setStats({ hadir, terlambat, izin, alpha });
+      } catch {
+        // gagal memuat data dashboard
       }
     }
 
     fetchData();
   }, []);
 
+  const fmtWIB = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+  };
+
   const statusText = !todayData
     ? "Memuat..."
-    : todayData.checkout
-      ? `Sudah Check-out ${new Date(todayData.waktuCheckout!).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
-      : todayData.checkin
-        ? `Sudah Check-in ${new Date(todayData.waktuCheckin!).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
-        : "Belum Absen";
+    : todayData.isOnLeave
+      ? `Sedang cuti: ${todayData.kategoriCuti?.keterangan || "Izin"}`
+      : todayData.checkout
+        ? `Sudah Check-out ${fmtWIB(todayData.waktuCheckout!)}`
+        : todayData.checkin
+          ? `Sudah Check-in ${fmtWIB(todayData.waktuCheckin!)}`
+          : "Belum Absen";
 
-  const statusOnline = !todayData ? false : todayData.checkin;
+  const statusOnline = !todayData ? false : todayData.isOnLeave ? false : todayData.checkin;
 
   return (
     <div className="space-y-5">

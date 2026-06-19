@@ -20,6 +20,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Password baru minimal 6 karakter" }, { status: 400 });
   }
 
+  if (passwordBaru.length > 128) {
+    return NextResponse.json({ error: "Password baru maksimal 128 karakter" }, { status: 400 });
+  }
+
+  if (passwordBaru === passwordLama) {
+    return NextResponse.json({ error: "Password baru harus berbeda dari password lama" }, { status: 400 });
+  }
+
   const { prisma } = await import("@/lib/prisma");
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
 

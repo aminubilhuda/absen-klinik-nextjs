@@ -4,6 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { haversineDistance } from "@/lib/haversine";
 import { getDateInWIB, getDayNameInWIB, getNowWIB } from "@/lib/date";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -12,7 +18,7 @@ export async function POST(req: NextRequest) {
   const { prisma } = await import("@/lib/prisma");
 
   const body = await req.json();
-  const { latitude, longitude } = body;
+  const { latitude, longitude, foto } = body;
 
   if (!latitude || !longitude) {
     return NextResponse.json({ error: "Lokasi tidak ditemukan" }, { status: 400 });
@@ -33,6 +39,20 @@ export async function POST(req: NextRequest) {
   }
 
   const today = getDateInWIB();
+
+  const existingLeave = await prisma.leaveRequest.findFirst({
+    where: {
+      userId: session.user.id,
+      status: "APPROVED",
+      tanggalMulai: { lte: today },
+      tanggalAkhir: { gte: today },
+    },
+    select: { id: true },
+  });
+
+  if (existingLeave) {
+    return NextResponse.json({ error: "Anda sedang dalam masa cuti/izin" }, { status: 400 });
+  }
 
   const existing = await prisma.attendance.findFirst({
     where: { userId: session.user.id, tanggal: today },
@@ -61,25 +81,46 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  let fotoCheckin: string | null = null;
+
+  if (foto) {
+    try {
+      const base64Data = foto.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      if (buffer.length <= 2 * 1024 * 1024) {
+        const now = new Date();
+        const filename = `${session.user.id}_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.jpg`;
+        const dir = path.join(process.cwd(), "public", "uploads", "attendance");
+        await mkdir(dir, { recursive: true });
+        await writeFile(path.join(dir, filename), buffer);
+        fotoCheckin = `/uploads/attendance/${filename}`;
+      }
+    } catch {
+      // foto gagal disimpan, tetap lanjut tanpa foto
+    }
+  }
+
   await prisma.attendance.upsert({
     where: { userId_tanggal: { userId: session.user.id, tanggal: today } },
     update: {
-      waktuCheckin: new Date(),
+      waktuCheckin: getNowWIB(),
       latCheckin: latitude,
       lngCheckin: longitude,
       jarakCheckin: Math.round(distance),
       status,
       menitTerlambat,
+      fotoCheckin,
     },
     create: {
       userId: session.user.id,
       tanggal: today,
-      waktuCheckin: new Date(),
+      waktuCheckin: getNowWIB(),
       latCheckin: latitude,
       lngCheckin: longitude,
       jarakCheckin: Math.round(distance),
       status,
       menitTerlambat,
+      fotoCheckin,
     },
   });
 

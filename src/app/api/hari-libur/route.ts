@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Building2, MapPin, Calendar, CalendarRange, FileText, BarChart3, Clock, Settings } from "lucide-react";
+import { Home, Users, Building2, MapPin, Calendar, CalendarRange, FileText, Tags, BarChart3, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Leaf } from "lucide-react";
@@ -15,8 +15,9 @@ const navItems = [
   { href: "/admin/jadwal", label: "Jadwal", icon: Calendar },
   { href: "/admin/hari-libur", label: "Hari Libur", icon: CalendarRange },
   { href: "/admin/izin", label: "Izin", icon: FileText },
+  { href: "/admin/kategori-absensi", label: "Kategori Absensi", icon: Tags },
   { href: "/admin/laporan", label: "Laporan", icon: BarChart3 },
-  { href: "/admin/laporan/rekap-jam-kerja", label: "Rekap Jam Kerja", icon: Clock },
+  { href: "/admin/laporan/rekap-jam-kerja", label: "Presensi Bulanan", icon: Clock },
 ];
 
 export function AdminNav() {

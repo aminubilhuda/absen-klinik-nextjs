@@ -1,5 +1,8 @@
 "use client";
 
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { AdminNav, AdminHeader } from "@/components/mobile/AdminNav";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,6 +12,22 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session || session.user.role !== "ADMIN") {
+      router.replace("/karyawan/absen");
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") {
+    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" /></div>;
+  }
+
+  if (!session || session.user.role !== "ADMIN") return null;
+
   return (
     <>
       <style>{`

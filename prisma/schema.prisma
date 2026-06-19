@@ -24,12 +24,6 @@ enum AttendanceStatus {
   TERLAMBAT
 }
 
-enum LeaveType {
-  IZIN
-  SAKIT
-  CUTI
-}
-
 enum LeaveStatus {
   PENDING
   APPROVED
@@ -58,6 +52,7 @@ model UnitKerja {
 
 model User {
   id           String     @id @default(cuid())
+  nip          String?
   nama         String
   email        String     @unique
   passwordHash String     @map("password_hash")
@@ -78,6 +73,8 @@ model User {
   accounts Account[]
   sessions Session[]
 
+  @@index([role, status])
+  @@index([unitKerjaId])
   @@map("users")
 }
 
@@ -142,43 +139,51 @@ model WorkSchedule {
 }
 
 model Attendance {
-  id             String           @id @default(cuid())
-  userId         String           @map("user_id")
-  tanggal        DateTime         @db.Date
-  waktuCheckin   DateTime?        @map("waktu_checkin")
-  latCheckin     Float?           @map("lat_checkin")
-  lngCheckin     Float?           @map("lng_checkin")
-  jarakCheckin   Float?           @map("jarak_checkin")
-  waktuCheckout  DateTime?        @map("waktu_checkout")
-  latCheckout    Float?           @map("lat_checkout")
-  lngCheckout    Float?           @map("lng_checkout")
-  jarakCheckout  Float?           @map("jarak_checkout")
-  status         AttendanceStatus
-  menitTerlambat Int?             @map("menit_terlambat")
+  id                String           @id @default(cuid())
+  userId            String           @map("user_id")
+  tanggal           DateTime         @db.Date
+  waktuCheckin      DateTime?        @map("waktu_checkin")
+  latCheckin        Float?           @map("lat_checkin")
+  lngCheckin        Float?           @map("lng_checkin")
+  jarakCheckin      Float?           @map("jarak_checkin")
+  waktuCheckout     DateTime?        @map("waktu_checkout")
+  latCheckout       Float?           @map("lat_checkout")
+  lngCheckout       Float?           @map("lng_checkout")
+  jarakCheckout     Float?           @map("jarak_checkout")
+  status            AttendanceStatus
+  menitTerlambat    Int?             @map("menit_terlambat")
+  kategoriAbsensiId String?          @map("kategori_absensi_id")
+  fotoCheckin       String?          @map("foto_checkin")
+  fotoCheckout      String?          @map("foto_checkout")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kategoriAbsensi KategoriAbsensi? @relation(fields: [kategoriAbsensiId], references: [id], onDelete: SetNull)
 
   @@unique([userId, tanggal])
   @@map("attendances")
 }
 
 model LeaveRequest {
-  id           String      @id @default(cuid())
-  userId       String      @map("user_id")
-  jenis        LeaveType
-  tanggalMulai DateTime    @map("tanggal_mulai") @db.Date
-  tanggalAkhir DateTime    @map("tanggal_akhir") @db.Date
-  alasan       String      @db.Text
-  lampiranUrl  String?     @map("lampiran_url")
-  status       LeaveStatus @default(PENDING)
-  catatanAdmin String?     @map("catatan_admin") @db.Text
-  reviewedBy   String?     @map("reviewed_by")
-  reviewedAt   DateTime?   @map("reviewed_at")
-  createdAt    DateTime    @default(now()) @map("created_at")
+  id               String             @id @default(cuid())
+  userId           String             @map("user_id")
+  kategoriAbsensiId String?            @map("kategori_absensi_id")
+  tanggalMulai     DateTime           @map("tanggal_mulai") @db.Date
+  tanggalAkhir     DateTime           @map("tanggal_akhir") @db.Date
+  alasan           String             @db.Text
+  lampiranUrl      String?            @map("lampiran_url")
+  status           LeaveStatus        @default(PENDING)
+  catatanAdmin     String?            @map("catatan_admin") @db.Text
+  reviewedBy       String?            @map("reviewed_by")
+  reviewedAt       DateTime?          @map("reviewed_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
 
-  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviewer   User? @relation("ReviewedLeaves", fields: [reviewedBy], references: [id])
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer         User?             @relation("ReviewedLeaves", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  kategoriAbsensi  KategoriAbsensi?  @relation(fields: [kategoriAbsensiId], references: [id], onDelete: SetNull)
 
+  @@index([status])
+  @@index([userId])
+  @@index([tanggalMulai, tanggalAkhir])
   @@map("leave_requests")
 }
 
@@ -189,6 +194,20 @@ model HariLibur {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("hari_libur")
+}
+
+model KategoriAbsensi {
+  id         String   @id @default(cuid())
+  kode       String   @unique
+  keterangan String
+  warnaLabel String?  @map("warna_label")
+  isIzin     Boolean  @default(false) @map("is_izin")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  attendances  Attendance[]
+  leaveRequests LeaveRequest[]
+
+  @@map("kategori_absensi")
 }
 
 model PushSubscription {

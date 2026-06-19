@@ -5,6 +5,7 @@ import { MapPin, Navigation, CheckCircle, XCircle, Loader2, Clock, AlertTriangle
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { haversineDistance } from "@/lib/haversine";
+import CameraCapture from "@/components/CameraCapture";
 
 interface TodayData {
   checkin: boolean;
@@ -15,6 +16,10 @@ interface TodayData {
   menitTerlambat: number | null;
   jarakCheckin: number | null;
   jarakCheckout: number | null;
+  fotoCheckin: string | null;
+  fotoCheckout: string | null;
+  isOnLeave: boolean;
+  kategoriCuti: { id: string; kode: string; keterangan: string; warnaLabel?: string } | null;
 }
 
 interface ClinicInfo {
@@ -31,6 +36,8 @@ export default function AbsenPage() {
   const [loading, setLoading] = useState(false);
   const [gettingLoc, setGettingLoc] = useState(true);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [absenType, setAbsenType] = useState<"checkin" | "checkout" | null>(null);
   const [todayData, setTodayData] = useState<TodayData>({
     checkin: false,
     checkout: false,
@@ -40,6 +47,10 @@ export default function AbsenPage() {
     menitTerlambat: null,
     jarakCheckin: null,
     jarakCheckout: null,
+    fotoCheckin: null,
+    fotoCheckout: null,
+    isOnLeave: false,
+    kategoriCuti: null,
   });
 
   const fetchToday = () => {
@@ -64,7 +75,7 @@ export default function AbsenPage() {
           setGettingLoc(false);
         },
         () => setGettingLoc(false),
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setGettingLoc(false);
@@ -78,44 +89,49 @@ export default function AbsenPage() {
     }
   }, [userLoc, clinic]);
 
-  const handleAbsen = useCallback(
-    async (type: "checkin" | "checkout") => {
-      if (!userLoc) return;
-      setLoading(true);
-      setResult(null);
+  const handleAbsenClick = useCallback((type: "checkin" | "checkout") => {
+    setAbsenType(type);
+    setShowCamera(true);
+    setResult(null);
+  }, []);
 
-      try {
-        const res = await fetch(`/api/attendance/${type}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            latitude: userLoc.lat,
-            longitude: userLoc.lng,
-          }),
-        });
-        const data = await res.json();
+  const handlePhotoCapture = useCallback(async (base64: string) => {
+    if (!absenType || !userLoc) return;
+    setLoading(true);
 
-        if (!res.ok) {
-          setResult({ success: false, message: data.error });
-        } else {
-          setResult({ success: true, message: data.message });
-          fetchToday();
-        }
-      } catch {
-        setResult({ success: false, message: "Gagal menghubungi server" });
-      } finally {
-        setLoading(false);
+    try {
+      const res = await fetch(`/api/attendance/${absenType}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          latitude: userLoc.lat,
+          longitude: userLoc.lng,
+          foto: base64,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResult({ success: false, message: data.error });
+      } else {
+        setResult({ success: true, message: data.message });
+        fetchToday();
       }
-    },
-    [userLoc]
-  );
+    } catch {
+      setResult({ success: false, message: "Gagal menghubungi server" });
+    } finally {
+      setLoading(false);
+      setShowCamera(false);
+      setAbsenType(null);
+    }
+  }, [absenType, userLoc]);
 
   const inRange = distance !== null && clinic ? distance <= clinic.radiusMeter : false;
 
   const formatTime = (iso: string | null) => {
     if (!iso) return null;
     const d = new Date(iso);
-    return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
   };
 
   return (
@@ -157,43 +173,62 @@ export default function AbsenPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          onClick={() => handleAbsen("checkin")}
-          disabled={loading || todayData.checkin || !userLoc || gettingLoc}
-          className={`h-14 text-base font-semibold rounded-xl ${
-            todayData.checkin
-              ? "bg-gray-100 text-gray-400"
-              : "bg-emerald-600 hover:bg-emerald-700"
-          }`}
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : todayData.checkin ? (
-            "Sudah Check-in"
-          ) : (
-            "Absen Masuk"
-          )}
-        </Button>
-        <Button
-          onClick={() => handleAbsen("checkout")}
-          disabled={loading || !todayData.checkin || todayData.checkout || !userLoc || gettingLoc}
-          variant={todayData.checkout ? "outline" : "default"}
-          className={`h-14 text-base font-semibold rounded-xl ${
-            todayData.checkout
-              ? "bg-gray-100 text-gray-400"
-              : "bg-emerald-600 hover:bg-emerald-700"
-          }`}
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : todayData.checkout ? (
-            "Sudah Check-out"
-          ) : (
-            "Absen Keluar"
-          )}
-        </Button>
-      </div>
+      {todayData.isOnLeave && (
+        <Card className="border-0 bg-blue-50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+              <CheckCircle className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-medium text-blue-700">Anda sedang dalam masa cuti/izin</p>
+              <p className="text-sm text-blue-600">
+                {todayData.kategoriCuti?.keterangan || "Cuti"}
+                {todayData.kategoriCuti?.kode ? ` (${todayData.kategoriCuti.kode})` : ""}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!todayData.isOnLeave && (
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            onClick={() => handleAbsenClick("checkin")}
+            disabled={loading || todayData.checkin || !userLoc || gettingLoc}
+            className={`h-14 text-base font-semibold rounded-xl ${
+              todayData.checkin
+                ? "bg-gray-100 text-gray-400"
+                : "bg-emerald-600 hover:bg-emerald-700"
+            }`}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : todayData.checkin ? (
+              "Sudah Check-in"
+            ) : (
+              "Absen Masuk"
+            )}
+          </Button>
+          <Button
+            onClick={() => handleAbsenClick("checkout")}
+            disabled={loading || !todayData.checkin || todayData.checkout || !userLoc || gettingLoc}
+            variant={todayData.checkout ? "outline" : "default"}
+            className={`h-14 text-base font-semibold rounded-xl ${
+              todayData.checkout
+                ? "bg-gray-100 text-gray-400"
+                : "bg-emerald-600 hover:bg-emerald-700"
+            }`}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : todayData.checkout ? (
+              "Sudah Check-out"
+            ) : (
+              "Absen Keluar"
+            )}
+          </Button>
+        </div>
+      )}
 
       {result && (
         <Card className={`border-0 ${result.success ? "bg-emerald-50" : "bg-red-50"}`}>
@@ -230,13 +265,7 @@ export default function AbsenPage() {
               }`}>
                 {todayData.checkin ? (
                   todayData.status === "TERLAMBAT" ? (
-                    <AlertTriangle className={`w-4 h-4 ${
-                      todayData.checkin
-                        ? todayData.status === "TERLAMBAT"
-                          ? "text-amber-600"
-                          : "text-emerald-600"
-                        : "text-gray-400"
-                    }`} />
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
                   ) : (
                     <CheckCircle className="w-4 h-4 text-emerald-600" />
                   )
@@ -297,6 +326,21 @@ export default function AbsenPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Camera Overlay */}
+      {showCamera && clinic && (
+        <CameraCapture
+          onCapture={handlePhotoCapture}
+          onClose={() => { setShowCamera(false); setAbsenType(null); }}
+          loading={loading}
+          info={{
+            namaKlinik: clinic.namaKlinik,
+            jarak: distance,
+            radiusMeter: clinic.radiusMeter,
+            inRange,
+          }}
+        />
+      )}
     </div>
   );
 }

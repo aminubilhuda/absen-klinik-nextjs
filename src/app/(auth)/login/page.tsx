@@ -22,7 +22,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      const role = (session?.user as any)?.role;
+      const role = session?.user?.role;
       if (role === "ADMIN") router.push("/admin");
       else router.push("/karyawan/absen");
     }
@@ -56,7 +56,7 @@ export default function LoginPage() {
     }
 
     const session = await getSession();
-    const role = (session?.user as any)?.role;
+    const role = session?.user?.role;
 
     if (role === "ADMIN") {
       router.push("/admin");

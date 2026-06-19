@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
@@ -15,6 +15,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
   const [form, setForm] = useState({
     nama: "",
     email: "",
@@ -42,7 +49,7 @@ export default function RegisterPage() {
     }
 
     setSuccess("Registrasi berhasil! Silakan tunggu persetujuan admin.");
-    setTimeout(() => router.push("/login"), 3000);
+    timeoutRef.current = setTimeout(() => router.push("/login"), 3000);
   }
 
   return (

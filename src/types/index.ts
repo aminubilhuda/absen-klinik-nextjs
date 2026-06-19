@@ -22,7 +22,11 @@ export interface Attendance {
   jarakCheckout?: number;
   status: "TEPAT_WAKTU" | "TERLAMBAT";
   menitTerlambat?: number;
+  kategoriAbsensiId?: string;
+  fotoCheckin?: string;
+  fotoCheckout?: string;
   user?: User;
+  kategoriAbsensi?: KategoriAbsensi;
 }
 
 export interface ClinicSetting {
@@ -44,7 +48,7 @@ export interface WorkSchedule {
 export interface LeaveRequest {
   id: string;
   userId: string;
-  jenis: "IZIN" | "SAKIT" | "CUTI";
+  kategoriAbsensiId: string;
   tanggalMulai: string;
   tanggalAkhir: string;
   alasan: string;
@@ -55,12 +59,21 @@ export interface LeaveRequest {
   reviewedAt?: string;
   createdAt: string;
   user?: User;
+  kategoriAbsensi?: KategoriAbsensi;
 }
 
 export interface UnitKerja {
   id: string;
   nama: string;
   createdAt: string;
+}
+
+export interface KategoriAbsensi {
+  id: string;
+  kode: string;
+  keterangan: string;
+  warnaLabel?: string;
+  isIzin: boolean;
 }
 
 export interface HariLibur {

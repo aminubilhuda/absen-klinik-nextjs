@@ -23,7 +23,7 @@ function getDaysInMonth(year: number, month: number): number {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -42,26 +42,24 @@ export async function POST(req: Request) {
     const startDate = new Date(tahunNum, bulanNum - 1, 1);
     const endDate = new Date(tahunNum, bulanNum - 1, totalHari);
 
-    const [users, attendances, schedules, hariLiburList, leaveRequests, unitKerja] = await Promise.all([
+    const userIds = (await prisma.user.findMany({
+      where: {
+        role: "KARYAWAN",
+        status: "ACTIVE",
+        ...(unitKerjaId ? { unitKerjaId } : {}),
+      },
+      select: { id: true },
+    })).map((u) => u.id);
+
+    const [users, attendances, schedules, hariLiburList, leaveRequests, unitKerja, kategoriList, clinicSetting] = await Promise.all([
       prisma.user.findMany({
-        where: {
-          role: "KARYAWAN",
-          status: "ACTIVE",
-          ...(unitKerjaId ? { unitKerjaId } : {}),
-        },
-        select: { id: true, nama: true, unitKerjaId: true },
+        where: { id: { in: userIds } },
+        select: { id: true, nip: true, nama: true, unitKerjaId: true },
         orderBy: { nama: "asc" },
       }),
       prisma.attendance.findMany({
         where: {
-          userId: { in: (await prisma.user.findMany({
-            where: {
-              role: "KARYAWAN",
-              status: "ACTIVE",
-              ...(unitKerjaId ? { unitKerjaId } : {}),
-            },
-            select: { id: true },
-          })).map((u) => u.id) },
+          userId: { in: userIds },
           tanggal: { gte: startDate, lte: endDate },
         },
         select: {
@@ -71,6 +69,7 @@ export async function POST(req: Request) {
           waktuCheckout: true,
           status: true,
           menitTerlambat: true,
+          kategoriAbsensiId: true,
         },
       }),
       prisma.workSchedule.findMany(),
@@ -84,12 +83,16 @@ export async function POST(req: Request) {
           tanggalMulai: { lte: endDate },
           tanggalAkhir: { gte: startDate },
         },
-        select: { userId: true, tanggalMulai: true, tanggalAkhir: true },
+        select: { userId: true, tanggalMulai: true, tanggalAkhir: true, kategoriAbsensiId: true },
       }),
       unitKerjaId
         ? prisma.unitKerja.findUnique({ where: { id: unitKerjaId }, select: { id: true, nama: true } })
         : Promise.resolve(null),
+      prisma.kategoriAbsensi.findMany({ orderBy: { kode: "asc" } }),
+      prisma.clinicSetting.findFirst({ select: { namaKlinik: true } }),
     ]);
+
+    const kategoriMap = new Map(kategoriList.map((k) => [k.id, k]));
 
     const scheduleMap = new Map<string, { jamMasuk?: string; jamKeluar?: string; isLibur: boolean }>();
     for (const s of schedules) {
@@ -108,20 +111,23 @@ export async function POST(req: Request) {
       attendanceMap.set(key, a);
     }
 
-    const leaveMap = new Map<string, { mulai: number; akhir: number }[]>();
+    const leaveMap = new Map<string, { mulai: number; akhir: number; kode: string }[]>();
     for (const l of leaveRequests) {
       if (!leaveMap.has(l.userId)) leaveMap.set(l.userId, []);
+      const kat = l.kategoriAbsensiId ? kategoriMap.get(l.kategoriAbsensiId) : null;
       leaveMap.get(l.userId)!.push({
         mulai: l.tanggalMulai.getTime(),
         akhir: l.tanggalAkhir.getTime(),
+        kode: kat?.kode || "IZN",
       });
     }
 
-    function isOnLeave(userId: string, date: Date): boolean {
+    function isOnLeave(userId: string, date: Date): string | null {
       const leaves = leaveMap.get(userId);
-      if (!leaves) return false;
+      if (!leaves) return null;
       const t = date.getTime();
-      return leaves.some((l) => t >= l.mulai && t <= l.akhir);
+      const match = leaves.find((l) => t >= l.mulai && t <= l.akhir);
+      return match ? match.kode : null;
     }
 
     function formatDate(dateNum: number): string {
@@ -157,8 +163,15 @@ export async function POST(req: Request) {
     const data = users.map((user) => {
       let totalJamAktual = 0;
       let totalJamWajib = 0;
+      let totalLembur = 0;
+      let totalTks = 0;
 
-      const harian: Array<string | null> = [];
+      const harian: Array<{
+        type: "checkmark" | "hours" | "code" | "empty" | "holiday" | "sunday" | "liburJadwal";
+        value: string | null;
+        codeLabel?: string;
+        warnaLabel?: string;
+      }> = [];
 
       for (let d = 1; d <= totalHari; d++) {
         const date = new Date(tahunNum, bulanNum - 1, d);
@@ -175,19 +188,58 @@ export async function POST(req: Request) {
         const attKey = `${user.id}-${dateStr}`;
         const att = attendanceMap.get(attKey);
 
-        if (att && att.waktuCheckin && att.waktuCheckout) {
+        if (isLiburNasional) {
+          harian.push({ type: "holiday", value: null });
+        } else if (isMinggu) {
+          harian.push({ type: "sunday", value: null });
+        } else if (isClinicLibur) {
+          harian.push({ type: "liburJadwal", value: null });
+        } else if (att?.kategoriAbsensiId) {
+          const kat = kategoriMap.get(att.kategoriAbsensiId);
+          harian.push({
+            type: "code",
+            value: kat?.kode || "?",
+            codeLabel: kat?.keterangan,
+            warnaLabel: kat?.warnaLabel || undefined,
+          });
+        } else if (onLeave) {
+          harian.push({ type: "code", value: onLeave, codeLabel: "Izin/Cuti" });
+        } else if (att && att.waktuCheckin && att.waktuCheckout) {
           const checkin = att.waktuCheckin.getTime();
           const checkout = att.waktuCheckout.getTime();
           const jamAktual = Math.max(0, Math.round((checkout - checkin) / 60000));
           totalJamAktual += jamAktual;
-          harian.push(minutesToHM(jamAktual));
+
+          const jamWajib = schedule?.jamMasuk && schedule?.jamKeluar
+            ? parseTimeToMinutes(schedule.jamKeluar) - parseTimeToMinutes(schedule.jamMasuk)
+            : 0;
+
+          if (jamAktual >= jamWajib) {
+            harian.push({ type: "checkmark", value: "✔" });
+          } else {
+            harian.push({ type: "hours", value: minutesToHM(jamAktual) });
+          }
+
+          if (schedule?.jamKeluar) {
+            const jamKeluarMenit = parseTimeToMinutes(schedule.jamKeluar);
+            const checkoutMenit = date.getHours() * 60 + date.getMinutes();
+            const checkoutTotal = checkout - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+            const checkoutMenitFull = Math.round(checkoutTotal / 60000);
+            const lemburMulai = jamKeluarMenit + 60;
+            if (checkoutMenitFull > lemburMulai) {
+              totalLembur += checkoutMenitFull - lemburMulai;
+            }
+          }
         } else if (att && att.waktuCheckin && !att.waktuCheckout) {
-          harian.push(null);
+          harian.push({ type: "empty", value: null });
         } else {
-          harian.push(null);
+          if (!isHariLibur && !onLeave) {
+            totalTks += 1;
+          }
+          harian.push({ type: "empty", value: null });
         }
 
-        if (!isHariLibur && !onLeave && schedule?.jamMasuk && schedule?.jamKeluar) {
+        if (!isHariLibur && !onLeave && !att?.kategoriAbsensiId && schedule?.jamMasuk && schedule?.jamKeluar) {
           const jamWajib = parseTimeToMinutes(schedule.jamKeluar) - parseTimeToMinutes(schedule.jamMasuk);
           totalJamWajib += jamWajib;
         }
@@ -197,21 +249,28 @@ export async function POST(req: Request) {
 
       return {
         userId: user.id,
+        nip: user.nip || null,
         nama: user.nama,
         harian,
         tjk: minutesToHM(totalJamAktual),
         kjk: minutesToHM(kjkMenit),
+        totalKjk: minutesToHM(kjkMenit),
+        tjl: minutesToHM(totalLembur),
+        tks: totalTks,
         tjkMenit: totalJamAktual,
         kjkMenit,
+        tjlMenit: totalLembur,
       };
     });
 
     return NextResponse.json({
       unitKerja,
+      clinicName: clinicSetting?.namaKlinik || "Pemerintah Kabupaten Tuban",
       bulan: bulanNum,
       tahun: tahunNum,
       totalHari,
       daftarHari,
+      kategoriList,
       data,
     });
   } catch (error) {

@@ -34,6 +34,7 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
   if (request.method !== "GET") return;
 
   if (url.pathname.startsWith("/api/")) {

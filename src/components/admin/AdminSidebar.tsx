@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, MapPin, Calendar, CalendarRange, Building2, FileText, BarChart3, Clock, LogOut } from "lucide-react";
+import { Home, Users, MapPin, Calendar, CalendarRange, Building2, FileText, BarChart3, Clock, Tags, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClinicName } from "@/hooks/use-clinic-name";
 
@@ -14,8 +14,9 @@ const navItems = [
   { href: "/admin/jadwal", label: "Jadwal", icon: Calendar },
   { href: "/admin/hari-libur", label: "Hari Libur", icon: CalendarRange },
   { href: "/admin/izin", label: "Izin", icon: FileText },
+  { href: "/admin/kategori-absensi", label: "Kategori Absensi", icon: Tags },
   { href: "/admin/laporan", label: "Laporan", icon: BarChart3 },
-  { href: "/admin/laporan/rekap-jam-kerja", label: "Rekap Jam Kerja", icon: Clock },
+  { href: "/admin/laporan/rekap-jam-kerja", label: "Presensi Bulanan", icon: Clock },
 ];
 
 export function AdminSidebar() {

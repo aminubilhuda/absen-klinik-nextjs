@@ -223,8 +223,8 @@ export default function AdminLaporanPage() {
                       <TableCell className="text-center text-muted-foreground">{i + 1}</TableCell>
                       <TableCell className="font-medium">{r.user.nama}</TableCell>
                       <TableCell>{new Date(r.tanggal).toLocaleDateString("id-ID")}</TableCell>
-                      <TableCell>{r.waktuCheckin ? new Date(r.waktuCheckin).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</TableCell>
-                      <TableCell>{r.waktuCheckout ? new Date(r.waktuCheckout).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</TableCell>
+                      <TableCell>{r.waktuCheckin ? (() => { const d = new Date(r.waktuCheckin); return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`; })() : "-"}</TableCell>
+                      <TableCell>{r.waktuCheckout ? (() => { const d = new Date(r.waktuCheckout); return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`; })() : "-"}</TableCell>
                       <TableCell>
                         <Badge className={r.status === "TEPAT_WAKTU" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
                           {r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`}

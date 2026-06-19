@@ -3,7 +3,13 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { haversineDistance } from "@/lib/haversine";
-import { getDateInWIB } from "@/lib/date";
+import { getDateInWIB, getNowWIB } from "@/lib/date";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -12,7 +18,11 @@ export async function POST(req: NextRequest) {
   const { prisma } = await import("@/lib/prisma");
 
   const body = await req.json();
-  const { latitude, longitude } = body;
+  const { latitude, longitude, foto } = body;
+
+  if (!latitude || !longitude) {
+    return NextResponse.json({ error: "Lokasi tidak ditemukan" }, { status: 400 });
+  }
 
   const clinic = await prisma.clinicSetting.findFirst();
   if (!clinic) {
@@ -41,13 +51,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Anda sudah check-out hari ini" }, { status: 400 });
   }
 
+  let fotoCheckout: string | null = null;
+
+  if (foto) {
+    try {
+      const base64Data = foto.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      if (buffer.length <= 2 * 1024 * 1024) {
+        const now = new Date();
+        const filename = `${session.user.id}_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.jpg`;
+        const dir = path.join(process.cwd(), "public", "uploads", "attendance");
+        await mkdir(dir, { recursive: true });
+        await writeFile(path.join(dir, filename), buffer);
+        fotoCheckout = `/uploads/attendance/${filename}`;
+      }
+    } catch {
+      // foto gagal disimpan, tetap lanjut tanpa foto
+    }
+  }
+
   await prisma.attendance.update({
     where: { id: existing.id },
     data: {
-      waktuCheckout: new Date(),
+      waktuCheckout: getNowWIB(),
       latCheckout: latitude,
       lngCheckout: longitude,
       jarakCheckout: Math.round(distance),
+      fotoCheckout,
     },
   });
 

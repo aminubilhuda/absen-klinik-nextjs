@@ -2,11 +2,14 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { formatTimeWIB } from "@/lib/date";
+
+function fmtTime(d: Date): string {
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+}
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -32,7 +35,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -56,8 +59,8 @@ export async function POST(req: Request) {
     const data = records.map((r) => ({
       Nama: r.user.nama,
       Tanggal: r.tanggal.toISOString().split("T")[0],
-      "Check-in": r.waktuCheckin ? formatTimeWIB(r.waktuCheckin) : "-",
-      "Check-out": r.waktuCheckout ? formatTimeWIB(r.waktuCheckout) : "-",
+      "Check-in": r.waktuCheckin ? fmtTime(r.waktuCheckin) : "-",
+      "Check-out": r.waktuCheckout ? fmtTime(r.waktuCheckout) : "-",
       Status: r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`,
       Jarak: r.jarakCheckin ? `${r.jarakCheckin.toFixed(0)}m` : "-",
     }));
@@ -86,8 +89,8 @@ export async function POST(req: Request) {
       body: records.map((r) => [
         r.user.nama,
         r.tanggal.toISOString().split("T")[0],
-        r.waktuCheckin ? formatTimeWIB(r.waktuCheckin) : "-",
-        r.waktuCheckout ? formatTimeWIB(r.waktuCheckout) : "-",
+        r.waktuCheckin ? fmtTime(r.waktuCheckin) : "-",
+        r.waktuCheckout ? fmtTime(r.waktuCheckout) : "-",
         r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`,
       ]),
     });

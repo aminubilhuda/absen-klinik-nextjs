@@ -13,7 +13,17 @@ export async function GET(req: Request) {
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "30")));
   const skip = (page - 1) * limit;
 
-  const where = { userId: session.user.id };
+  const now = new Date();
+  const month = parseInt(url.searchParams.get("month") || String(now.getMonth() + 1));
+  const year = parseInt(url.searchParams.get("year") || String(now.getFullYear()));
+
+  const awalBulan = new Date(year, month - 1, 1);
+  const awalBulanBerikutnya = new Date(year, month, 1);
+
+  const where: any = {
+    userId: session.user.id,
+    tanggal: { gte: awalBulan, lt: awalBulanBerikutnya },
+  };
 
   const [records, total] = await Promise.all([
     prisma.attendance.findMany({
@@ -21,6 +31,9 @@ export async function GET(req: Request) {
       orderBy: { tanggal: "desc" },
       skip,
       take: limit,
+      include: {
+        kategoriAbsensi: { select: { id: true, kode: true, keterangan: true, warnaLabel: true } },
+      },
     }),
     prisma.attendance.count({ where }),
   ]);

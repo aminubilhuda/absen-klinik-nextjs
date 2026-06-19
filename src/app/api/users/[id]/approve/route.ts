@@ -8,7 +8,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id || (session.user as any)?.role !== "ADMIN") {
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -17,10 +17,15 @@ export async function PUT(
   const body = await req.json();
   const { action, unitKerjaId } = body;
 
-  const data: any = {};
+  const existingUser = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+  if (!existingUser) {
+    return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+  }
+
+  const data: Record<string, unknown> = {};
 
   if (action) {
-    const statusMap: Record<string, any> = {
+    const statusMap: Record<string, string> = {
       approve: "ACTIVE",
       reject: "REJECTED",
       deactivate: "DEACTIVATED",
@@ -33,6 +38,12 @@ export async function PUT(
   }
 
   if (unitKerjaId !== undefined) {
+    if (unitKerjaId) {
+      const unitExists = await prisma.unitKerja.findUnique({ where: { id: unitKerjaId }, select: { id: true } });
+      if (!unitExists) {
+        return NextResponse.json({ error: "Unit kerja tidak ditemukan" }, { status: 400 });
+      }
+    }
     data.unitKerjaId = unitKerjaId || null;
   }
 
