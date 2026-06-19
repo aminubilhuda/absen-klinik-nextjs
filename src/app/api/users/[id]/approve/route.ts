@@ -15,21 +15,34 @@ export async function PUT(
   const { prisma } = await import("@/lib/prisma");
   const { id } = await params;
   const body = await req.json();
-  const { action, catatan } = body;
+  const { action, unitKerjaId } = body;
 
-  const statusMap: Record<string, any> = {
-    approve: "ACTIVE",
-    reject: "REJECTED",
-    deactivate: "DEACTIVATED",
-  };
-  const status = statusMap[action];
-  if (!status) {
-    return NextResponse.json({ error: "Action tidak valid" }, { status: 400 });
+  const data: any = {};
+
+  if (action) {
+    const statusMap: Record<string, any> = {
+      approve: "ACTIVE",
+      reject: "REJECTED",
+      deactivate: "DEACTIVATED",
+    };
+    const status = statusMap[action];
+    if (!status) {
+      return NextResponse.json({ error: "Action tidak valid" }, { status: 400 });
+    }
+    data.status = status;
+  }
+
+  if (unitKerjaId !== undefined) {
+    data.unitKerjaId = unitKerjaId || null;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Tidak ada data yang diupdate" }, { status: 400 });
   }
 
   await prisma.user.update({
     where: { id },
-    data: { status },
+    data,
   });
 
   const messages: Record<string, string> = {
@@ -39,6 +52,6 @@ export async function PUT(
   };
 
   return NextResponse.json({
-    message: messages[action] || `Karyawan berhasil diupdate`,
+    message: (action ? messages[action] : undefined) || "Karyawan berhasil diupdate",
   });
 }

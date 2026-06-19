@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signIn, getSession, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { useClinicName } from "@/hooks/use-clinic-name";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +13,30 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const { name: appName } = useClinicName();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ email: "", password: "" });
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      if (role === "ADMIN") router.push("/admin");
+      else router.push("/karyawan/absen");
+    }
+  }, [status, session, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+      </div>
+    );
+  }
+
+  if (status === "authenticated") return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,7 +72,7 @@ export default function LoginPage() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 mb-2">
           <LogIn className="w-8 h-8 text-emerald-600" />
         </div>
-        <h1 className="text-2xl font-bold text-emerald-900">Absensi Klinik</h1>
+        <h1 className="text-2xl font-bold text-emerald-900">{appName}</h1>
         <p className="text-sm text-gray-500">Masuk untuk melanjutkan</p>
       </div>
 

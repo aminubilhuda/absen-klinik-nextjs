@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { formatTimeWIB } from "@/lib/date";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -55,10 +56,10 @@ export async function POST(req: Request) {
     const data = records.map((r) => ({
       Nama: r.user.nama,
       Tanggal: r.tanggal.toISOString().split("T")[0],
-      "Check-in": r.waktuCheckin?.toLocaleTimeString("id-ID"),
-      "Check-out": r.waktuCheckout?.toLocaleTimeString("id-ID"),
-      Status: r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat}m`,
-      Jarak: r.jarakCheckin ? `${r.jarakCheckin}m` : "-",
+      "Check-in": r.waktuCheckin ? formatTimeWIB(r.waktuCheckin) : "-",
+      "Check-out": r.waktuCheckout ? formatTimeWIB(r.waktuCheckout) : "-",
+      Status: r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`,
+      Jarak: r.jarakCheckin ? `${r.jarakCheckin.toFixed(0)}m` : "-",
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
@@ -75,17 +76,19 @@ export async function POST(req: Request) {
   if (format === "pdf") {
     const { default: jsPDF } = await import("jspdf");
     const { default: autoTable } = await import("jspdf-autotable");
+    const cs = await prisma.clinicSetting.findFirst();
+    const clinicName = cs?.namaKlinik || "Absensi Puskesmas";
     const doc = new jsPDF();
-    doc.text("Laporan Absensi Klinik", 14, 15);
+    doc.text(`Laporan ${clinicName}`, 14, 15);
     autoTable(doc, {
       startY: 25,
       head: [["Nama", "Tanggal", "Masuk", "Keluar", "Status"]],
       body: records.map((r) => [
         r.user.nama,
         r.tanggal.toISOString().split("T")[0],
-        r.waktuCheckin?.toLocaleTimeString("id-ID") || "-",
-        r.waktuCheckout?.toLocaleTimeString("id-ID") || "-",
-        r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat}m`,
+        r.waktuCheckin ? formatTimeWIB(r.waktuCheckin) : "-",
+        r.waktuCheckout ? formatTimeWIB(r.waktuCheckout) : "-",
+        r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`,
       ]),
     });
     const buf = Buffer.from(doc.output("arraybuffer"));

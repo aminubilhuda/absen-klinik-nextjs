@@ -46,6 +46,16 @@ enum DayOfWeek {
   MINGGU
 }
 
+model UnitKerja {
+  id        String   @id @default(cuid())
+  nama      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users User[]
+
+  @@map("unit_kerja")
+}
+
 model User {
   id           String     @id @default(cuid())
   nama         String
@@ -55,9 +65,11 @@ model User {
   role         Role       @default(KARYAWAN)
   status       UserStatus @default(PENDING)
   image        String?
+  unitKerjaId  String?    @map("unit_kerja_id")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
+  unitKerja       UnitKerja?        @relation(fields: [unitKerjaId], references: [id])
   attendances     Attendance[]
   leaveRequests   LeaveRequest[]
   pushSubscriptions PushSubscription[]
@@ -170,13 +182,24 @@ model LeaveRequest {
   @@map("leave_requests")
 }
 
+model HariLibur {
+  id         String   @id @default(cuid())
+  tanggal    DateTime @unique @db.Date
+  keterangan String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("hari_libur")
+}
+
 model PushSubscription {
-  id        String @id @default(cuid())
-  userId    String @map("user_id")
-  endpoint  String @db.Text
-  keys      String @db.Text
+  id           String @id @default(cuid())
+  userId       String @map("user_id")
+  endpoint     String @db.Text
+  endpointHash String @map("endpoint_hash")
+  keys         String @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, endpointHash])
   @@map("push_subscriptions")
 }

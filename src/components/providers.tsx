@@ -9,7 +9,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <>
       <PWAInstallPrompt />
       <PWARegister />
-      <SessionProvider>{children}</SessionProvider>
+      <SessionProvider refetchOnWindowFocus={false}>{children}</SessionProvider>
     </>
   );
 }

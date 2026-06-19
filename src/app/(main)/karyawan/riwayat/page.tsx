@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, CheckCircle, AlertTriangle, XCircle, Calendar } from "lucide-react";
+import { Clock, CheckCircle, AlertTriangle, XCircle, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface AttendanceRecord {
   id: string;
@@ -19,15 +20,19 @@ const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 export default function RiwayatPage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetch("/api/attendance/history")
+    setLoading(true);
+    fetch(`/api/attendance/history?page=${page}&limit=30`)
       .then((r) => r.json())
       .then((data) => {
         setRecords(data.records || []);
+        setTotalPages(data.totalPages || 1);
         setLoading(false);
       });
-  }, []);
+  }, [page]);
 
   if (loading) {
     return (
@@ -99,6 +104,18 @@ export default function RiwayatPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-gray-500 px-2">{page} / {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
       )}
     </div>

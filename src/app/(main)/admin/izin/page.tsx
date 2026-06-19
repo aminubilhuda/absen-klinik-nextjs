@@ -89,8 +89,8 @@ export default function AdminIzinPage() {
                   </div>
                 </div>
                 {leave.status === "PENDING" && (
-                  <Dialog open={dialogOpen && selected?.id === leave.id} onOpenChange={(open) => { setDialogOpen(open); setSelected(leave); }}>
-                    <DialogTrigger render={<Button size="sm" variant="outline" className="rounded-lg" />}>
+                  <Dialog open={dialogOpen && selected?.id === leave.id} onOpenChange={(open) => { if (!open) { setDialogOpen(false); setSelected(null); setCatatan(""); } }}>
+                    <DialogTrigger render={<Button size="sm" variant="outline" className="rounded-lg" onClick={() => { setSelected(leave); setDialogOpen(true); }} />}>
                       <MessageSquare className="w-4 h-4 mr-1" /> Review
                     </DialogTrigger>
                     <DialogContent className="rounded-2xl">

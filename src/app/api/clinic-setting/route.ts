@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 export async function GET() {
   const { prisma } = await import("@/lib/prisma");
   const setting = await prisma.clinicSetting.findFirst();
-  return NextResponse.json(setting || { latitude: 0, longitude: 0, radiusMeter: 100, namaKlinik: "Klinik" });
+  return NextResponse.json(setting || { latitude: 0, longitude: 0, radiusMeter: 100, namaKlinik: "Absensi Puskesmas" });
 }
 
 export async function PUT(req: NextRequest) {
@@ -32,5 +32,5 @@ export async function PUT(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ message: "Lokasi klinik berhasil disimpan" });
+  return NextResponse.json({ message: "Lokasi puskesmas berhasil disimpan" });
 }

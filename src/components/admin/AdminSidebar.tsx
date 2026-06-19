@@ -2,34 +2,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, MapPin, Calendar, FileText, BarChart3, LogOut } from "lucide-react";
+import { Home, Users, MapPin, Calendar, CalendarRange, Building2, FileText, BarChart3, Clock, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useClinicName } from "@/hooks/use-clinic-name";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: Home },
   { href: "/admin/karyawan", label: "Karyawan", icon: Users },
+  { href: "/admin/unit-kerja", label: "Unit Kerja", icon: Building2 },
   { href: "/admin/lokasi", label: "Lokasi", icon: MapPin },
   { href: "/admin/jadwal", label: "Jadwal", icon: Calendar },
+  { href: "/admin/hari-libur", label: "Hari Libur", icon: CalendarRange },
   { href: "/admin/izin", label: "Izin", icon: FileText },
   { href: "/admin/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/admin/laporan/rekap-jam-kerja", label: "Rekap Jam Kerja", icon: Clock },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { name: appName } = useClinicName();
 
   return (
     <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 z-40">
       <div className="p-5 border-b border-gray-100">
-        <h1 className="text-lg font-bold text-emerald-700">Absensi Klinik</h1>
+        <h1 className="text-lg font-bold text-emerald-700">{appName}</h1>
         <p className="text-xs text-gray-400 mt-0.5">Panel Administrasi</p>
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
           const isActive =
-            item.href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(item.href);
+            pathname === item.href ||
+            (pathname.startsWith(item.href + "/") &&
+              !navItems.some(
+                (o) => o.href !== item.href && pathname.startsWith(o.href) && o.href.length > item.href.length
+              ));
 
           return (
             <Link

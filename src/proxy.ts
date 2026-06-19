@@ -1,21 +1,19 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = ["/login", "/register", "/"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const session = request.cookies.get("authjs.session-token")?.value ||
-                  request.cookies.get("__Secure-authjs.session-token")?.value;
-
-  const isPublic = publicRoutes.some((r) => pathname.startsWith(r));
-
-  if (isPublic) {
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  if (!session && !pathname.startsWith("/api/auth")) {
+  const session = request.cookies.get("authjs.session-token")?.value ||
+                  request.cookies.get("__Secure-authjs.session-token")?.value;
+
+  if (!session) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

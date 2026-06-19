@@ -125,7 +125,7 @@ export default function AbsenPage() {
       <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-4 text-white">
         <div className="flex items-center gap-2 mb-3">
           <MapPin className="w-5 h-5" />
-          <span className="font-medium">{clinic?.namaKlinik || "Klinik"}</span>
+          <span className="font-medium">{clinic?.namaKlinik || "Absensi Puskesmas"}</span>
         </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="bg-white/10 rounded-xl p-3">
@@ -209,7 +209,7 @@ export default function AbsenPage() {
               </p>
               {!result.success && distance !== null && clinic && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Anda berada {Math.round(distance)}m dari klinik (maks {clinic.radiusMeter}m)
+                  Anda berada {Math.round(distance)}m dari puskesmas (maks {clinic.radiusMeter}m)
                 </p>
               )}
             </div>

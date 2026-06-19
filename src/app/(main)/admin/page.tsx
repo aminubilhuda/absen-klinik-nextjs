@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, CheckCircle2, Clock, UserPlus, Leaf } from "lucide-react";
+import { Users, CheckCircle2, Clock, UserPlus, Leaf, Timer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface Stats {
@@ -12,6 +12,13 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [stats, setStats] = useState<Stats>({
     totalKaryawan: 0,
     hadirHariIni: 0,
@@ -65,7 +72,7 @@ export default function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-emerald-800">Sistem berjalan normal</p>
-            <p className="text-xs text-emerald-600">{new Date().toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+            <p className="text-xs text-emerald-600">{time.toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}, {time.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB</p>
           </div>
         </CardContent>
       </Card>

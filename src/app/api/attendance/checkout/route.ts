@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { haversineDistance } from "@/lib/haversine";
+import { getDateInWIB } from "@/lib/date";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -15,19 +16,18 @@ export async function POST(req: NextRequest) {
 
   const clinic = await prisma.clinicSetting.findFirst();
   if (!clinic) {
-    return NextResponse.json({ error: "Lokasi klinik belum diatur" }, { status: 400 });
+    return NextResponse.json({ error: "Lokasi puskesmas belum diatur" }, { status: 400 });
   }
 
   const distance = haversineDistance(latitude, longitude, clinic.latitude, clinic.longitude);
   if (distance > clinic.radiusMeter) {
     return NextResponse.json(
-      { error: `Anda berada di luar radius absen (${Math.round(distance)}m dari klinik)` },
+      { error: `Anda berada di luar radius absen (${Math.round(distance)}m dari puskesmas)` },
       { status: 403 }
     );
   }
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const today = getDateInWIB();
 
   const existing = await prisma.attendance.findFirst({
     where: { userId: session.user.id, tanggal: today },

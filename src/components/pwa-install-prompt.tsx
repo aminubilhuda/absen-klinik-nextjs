@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useClinicName } from "@/hooks/use-clinic-name";
 
 export default function PWAInstallPrompt() {
+  const { name: appName } = useClinicName();
   const [deferredPrompt, setDeferredPrompt] =
     useState<Event | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -81,7 +83,7 @@ export default function PWAInstallPrompt() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground">
-            Install Absensi Klinik
+            Install {appName}
           </p>
           <p className="text-xs text-muted-foreground">
             Akses lebih cepat dengan install aplikasi

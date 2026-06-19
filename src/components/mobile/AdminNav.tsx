@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, MapPin, Calendar, FileText, BarChart3, Settings } from "lucide-react";
+import { Home, Users, Building2, MapPin, Calendar, CalendarRange, FileText, BarChart3, Clock, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Leaf } from "lucide-react";
@@ -10,10 +10,13 @@ import { Leaf } from "lucide-react";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: Home },
   { href: "/admin/karyawan", label: "Karyawan", icon: Users },
+  { href: "/admin/unit-kerja", label: "Unit Kerja", icon: Building2 },
   { href: "/admin/lokasi", label: "Lokasi", icon: MapPin },
   { href: "/admin/jadwal", label: "Jadwal", icon: Calendar },
+  { href: "/admin/hari-libur", label: "Hari Libur", icon: CalendarRange },
   { href: "/admin/izin", label: "Izin", icon: FileText },
   { href: "/admin/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/admin/laporan/rekap-jam-kerja", label: "Rekap Jam Kerja", icon: Clock },
 ];
 
 export function AdminNav() {
@@ -23,9 +26,11 @@ export function AdminNav() {
     <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
       {navItems.map((item) => {
         const isActive =
-          item.href === "/admin"
-            ? pathname === "/admin"
-            : pathname.startsWith(item.href);
+          pathname === item.href ||
+          (pathname.startsWith(item.href + "/") &&
+            !navItems.some(
+              (o) => o.href !== item.href && pathname.startsWith(o.href) && o.href.length > item.href.length
+            ));
 
         return (
           <Link

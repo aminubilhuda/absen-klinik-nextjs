@@ -8,6 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
 
 interface UserItem {
   id: string;
@@ -41,35 +50,60 @@ export default function AdminLaporanPage() {
       .then((data) => setUsers(data.users || []));
   }, []);
 
+  useEffect(() => {
+    setRecords([]);
+  }, [filters]);
+
   async function loadData() {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (filters.userId) params.set("userId", filters.userId);
-    if (filters.startDate) params.set("startDate", filters.startDate);
-    if (filters.endDate) params.set("endDate", filters.endDate);
+    try {
+      const params = new URLSearchParams();
+      if (filters.userId) params.set("userId", filters.userId);
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
 
-    const res = await fetch(`/api/reports?${params}`);
-    const data = await res.json();
-    setRecords(data.records || []);
-    setLoading(false);
+      const res = await fetch(`/api/reports?${params}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Gagal memuat data");
+        setRecords([]);
+        return;
+      }
+      const data = await res.json();
+      setRecords(data.records || []);
+    } catch {
+      toast.error("Terjadi kesalahan saat memuat data");
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function exportData(format: "xlsx" | "pdf") {
-    const res = await fetch("/api/reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...filters, format }),
-    });
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...filters, format }),
+      });
 
-    if (!res.ok) return;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Gagal mengekspor data");
+        return;
+      }
 
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `laporan-absensi.${format}`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `laporan-absensi.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Berhasil mengekspor ${format.toUpperCase()}`);
+    } catch {
+      toast.error("Terjadi kesalahan saat mengekspor");
+    }
   }
 
   const summary = {
@@ -86,12 +120,12 @@ export default function AdminLaporanPage() {
         <CardContent className="p-4 space-y-3">
           <div className="space-y-2">
             <Label>Karyawan</Label>
-            <Select value={filters.userId || null} onValueChange={(v) => setFilters({ ...filters, userId: v ?? "" })}>
+            <Select value={filters.userId || null} onValueChange={(v) => setFilters({ ...filters, userId: v ?? "" })} items={users.map(u => ({ value: u.id, label: u.nama }))}>
               <SelectTrigger className="h-11">
                 <SelectValue placeholder="Semua karyawan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=" ">Semua karyawan</SelectItem>
+                <SelectItem value="">Semua karyawan</SelectItem>
                 {users.map((u) => (
                   <SelectItem key={u.id} value={u.id}>{u.nama}</SelectItem>
                 ))}
@@ -168,6 +202,41 @@ export default function AdminLaporanPage() {
               <FileText className="w-4 h-4 mr-2" /> PDF
             </Button>
           </div>
+
+          <Card className="border-0 shadow-sm overflow-x-auto">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12 text-center">No</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Check-in</TableHead>
+                    <TableHead>Check-out</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Jarak</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {records.map((r, i) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-center text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell className="font-medium">{r.user.nama}</TableCell>
+                      <TableCell>{new Date(r.tanggal).toLocaleDateString("id-ID")}</TableCell>
+                      <TableCell>{r.waktuCheckin ? new Date(r.waktuCheckin).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</TableCell>
+                      <TableCell>{r.waktuCheckout ? new Date(r.waktuCheckout).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</TableCell>
+                      <TableCell>
+                        <Badge className={r.status === "TEPAT_WAKTU" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
+                          {r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">{r.jarakCheckin ? `${r.jarakCheckin.toFixed(0)}m` : "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

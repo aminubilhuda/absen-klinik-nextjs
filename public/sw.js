@@ -122,11 +122,11 @@ self.addEventListener("push", (event) => {
       data: { url: data.url || "/" },
     };
     event.waitUntil(
-      self.registration.showNotification(data.title || "Absensi Klinik", options)
+      self.registration.showNotification(data.title || "Absensi Puskesmas", options)
     );
   } catch {
     event.waitUntil(
-      self.registration.showNotification("Absensi Klinik", {
+      self.registration.showNotification("Absensi Puskesmas", {
         body: event.data.text(),
         icon: "/icons/icon-192.png",
       })

@@ -52,7 +52,7 @@ export default function RegisterPage() {
           <UserPlus className="w-8 h-8 text-emerald-600" />
         </div>
         <h1 className="text-2xl font-bold text-emerald-900">Daftar Akun</h1>
-        <p className="text-sm text-gray-500">Daftar sebagai karyawan klinik</p>
+        <p className="text-sm text-gray-500">Daftar sebagai karyawan puskesmas</p>
       </div>
 
       <Card className="border-0 shadow-lg shadow-emerald-100/50">

@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { haversineDistance } from "@/lib/haversine";
+import { getDateInWIB, getDayNameInWIB, getNowWIB } from "@/lib/date";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -19,20 +20,19 @@ export async function POST(req: NextRequest) {
 
   const clinic = await prisma.clinicSetting.findFirst();
   if (!clinic) {
-    return NextResponse.json({ error: "Lokasi klinik belum diatur" }, { status: 400 });
+    return NextResponse.json({ error: "Lokasi puskesmas belum diatur" }, { status: 400 });
   }
 
   const distance = haversineDistance(latitude, longitude, clinic.latitude, clinic.longitude);
 
   if (distance > clinic.radiusMeter) {
     return NextResponse.json(
-      { error: `Anda berada di luar radius absen (${Math.round(distance)}m dari klinik)` },
+      { error: `Anda berada di luar radius absen (${Math.round(distance)}m dari puskesmas)` },
       { status: 403 }
     );
   }
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const today = getDateInWIB();
 
   const existing = await prisma.attendance.findFirst({
     where: { userId: session.user.id, tanggal: today },
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   const schedule = await prisma.workSchedule.findFirst({
-    where: { day: ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU", "MINGGU"][new Date().getDay()] as any },
+    where: { day: getDayNameInWIB() as any },
   });
 
   let status: "TEPAT_WAKTU" | "TERLAMBAT" = "TEPAT_WAKTU";
@@ -51,9 +51,10 @@ export async function POST(req: NextRequest) {
 
   if (schedule && !schedule.isLibur && schedule.jamMasuk) {
     const [h, m] = schedule.jamMasuk.split(":").map(Number);
-    const jamMasuk = new Date();
-    jamMasuk.setHours(h, m, 0, 0);
-    const selisih = (Date.now() - jamMasuk.getTime()) / 60000;
+    const nowWIB = getNowWIB();
+    const jamMasukWIB = new Date(nowWIB);
+    jamMasukWIB.setUTCHours(h, m, 0, 0);
+    const selisih = (nowWIB.getTime() - jamMasukWIB.getTime()) / 60000;
     if (selisih > 0) {
       status = "TERLAMBAT";
       menitTerlambat = Math.round(selisih);

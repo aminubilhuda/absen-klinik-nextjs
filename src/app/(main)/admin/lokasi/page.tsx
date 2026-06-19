@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import "leaflet/dist/leaflet.css";
 import dynamic from "next/dynamic";
 import { Save, Navigation } from "lucide-react";
 import { useMap } from "react-leaflet";
@@ -32,11 +33,25 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export default function AdminLokasiPage() {
+  const [pinIcon, setPinIcon] = useState<any>(null);
   const [setting, setSetting] = useState({ latitude: -6.2, longitude: 106.8, radiusMeter: 100, namaKlinik: "" });
   const [marker, setMarker] = useState<[number, number]>([-6.2, 106.8]);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const markerRef = useRef<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      const L = (await import("leaflet")).default;
+      setPinIcon(L.divIcon({
+        className: "",
+        iconSize: [30, 42],
+        iconAnchor: [15, 42],
+        popupAnchor: [0, -42],
+        html: `<div style="width:30px;height:30px;background:#059669;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.3);position:relative;"><div style="width:12px;height:12px;background:white;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div></div>`,
+      }));
+    })();
+  }, []);
 
   useEffect(() => {
     fetch("/api/clinic-setting")
@@ -56,7 +71,7 @@ export default function AdminLokasiPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...setting, latitude: marker[0], longitude: marker[1] }),
     });
-    if (res.ok) toast.success("Lokasi klinik disimpan");
+    if (res.ok) toast.success("Lokasi puskesmas disimpan");
     else toast.error("Gagal menyimpan");
     setSaving(false);
   }
@@ -85,25 +100,28 @@ export default function AdminLokasiPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Lokasi Klinik</h1>
+      <h1 className="text-xl font-bold text-gray-900">Lokasi Puskesmas</h1>
 
       <Card className="border-0 shadow-sm p-0 overflow-hidden rounded-2xl h-64">
         <MapContainer center={marker} zoom={16} className="h-full w-full" scrollWheelZoom={true}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <Marker
-            position={marker}
-            draggable={true}
-            ref={markerRef}
-            eventHandlers={{
-              dragend: () => {
-                const m = markerRef.current;
-                if (m) {
-                  const latlng = m.getLatLng();
-                  setMarker([latlng.lat, latlng.lng]);
-                }
-              },
-            }}
-          />
+          {pinIcon && (
+            <Marker
+              position={marker}
+              icon={pinIcon}
+              draggable={true}
+              ref={markerRef}
+              eventHandlers={{
+                dragend: () => {
+                  const m = markerRef.current;
+                  if (m) {
+                    const latlng = m.getLatLng();
+                    setMarker([latlng.lat, latlng.lng]);
+                  }
+                },
+              }}
+            />
+          )}
           <Circle center={marker} radius={setting.radiusMeter} pathOptions={{ color: "#059669", fillOpacity: 0.1 }} />
           <MapUpdater center={marker} />
         </MapContainer>
@@ -112,11 +130,11 @@ export default function AdminLokasiPage() {
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4 space-y-4">
           <div className="space-y-2">
-            <Label>Nama Klinik</Label>
+            <Label>Nama Puskesmas</Label>
             <Input
               value={setting.namaKlinik}
               onChange={(e) => setSetting({ ...setting, namaKlinik: e.target.value })}
-              placeholder="Nama klinik..."
+              placeholder="Nama puskesmas..."
               className="h-11"
             />
           </div>

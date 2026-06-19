@@ -12,11 +12,7 @@ export default function AdminLayout({
   return (
     <>
       <style>{`
-        @media (min-width: 768px) {
-          nav[data-bottom-nav] {
-            display: none !important;
-          }
-        }
+        nav[data-bottom-nav] { display: none !important; }
       `}</style>
 
       <AdminSidebar />
@@ -27,8 +23,8 @@ export default function AdminLayout({
           <AdminHeader />
           <AdminNav />
         </div>
-        <div className="min-h-dvh bg-emerald-50/30 max-w-lg mx-auto px-4">
-          <main className="py-4">{children}</main>
+        <div className="max-w-lg mx-auto px-4">
+          <div className="py-4">{children}</div>
         </div>
       </div>
 

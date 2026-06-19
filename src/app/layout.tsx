@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Providers from "@/components/providers";
+import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,16 +9,20 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
-export const metadata: Metadata = {
-  title: "Absensi Klinik",
-  description: "Sistem Absensi Klinik Berbasis Lokasi",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Absensi Klinik",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const setting = await prisma.clinicSetting.findFirst();
+  const name = setting?.namaKlinik || "Absensi Puskesmas";
+  return {
+    title: name,
+    description: `Sistem Absensi ${name} Berbasis Lokasi`,
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: name,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

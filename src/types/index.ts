@@ -57,6 +57,19 @@ export interface LeaveRequest {
   user?: User;
 }
 
+export interface UnitKerja {
+  id: string;
+  nama: string;
+  createdAt: string;
+}
+
+export interface HariLibur {
+  id: string;
+  tanggal: string;
+  keterangan: string;
+  createdAt: string;
+}
+
 export interface Session {
   user: {
     id: string;

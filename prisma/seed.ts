@@ -8,11 +8,11 @@ async function main() {
 
   // Create admin
   await prisma.user.upsert({
-    where: { email: "admin@klinik.com" },
+    where: { email: "admin@puskesmas.com" },
     update: {},
     create: {
-      nama: "Admin Klinik",
-      email: "admin@klinik.com",
+      nama: "Admin Puskesmas",
+      email: "admin@puskesmas.com",
       passwordHash: adminPassword,
       noHp: "081234567890",
       role: "ADMIN",
@@ -48,7 +48,7 @@ async function main() {
       latitude: -6.2,
       longitude: 106.8,
       radiusMeter: 100,
-      namaKlinik: "Klinik Sehat",
+      namaKlinik: "Puskesmas Sehat",
     },
   });
 
