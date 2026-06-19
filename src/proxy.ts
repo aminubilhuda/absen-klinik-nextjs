@@ -25,7 +25,7 @@ function rateLimit(key: string, limit: number, windowMs: number): { success: boo
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/api/auth/")) {
+  if (pathname.startsWith("/api/auth/") && request.method === "POST") {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
     const result = rateLimit(`auth:${ip}`, 20, 60 * 1000);
 

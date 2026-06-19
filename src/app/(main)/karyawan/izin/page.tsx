@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, FileText, CheckCircle, XCircle, Clock, Paperclip, X, Pencil, Trash2 } from "lucide-react";
+import { Plus, FileText, CheckCircle, XCircle, Clock, Paperclip, X, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import CameraCaptureIzin from "@/components/CameraCaptureIzin";
 import LampiranPicker from "@/components/LampiranPicker";
 
@@ -38,6 +39,7 @@ interface LeaveItem {
 }
 
 export default function IzinPage() {
+  const router = useRouter();
   const [leaves, setLeaves] = useState<LeaveItem[]>([]);
   const [kategoriList, setKategoriList] = useState<KategoriItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -52,6 +54,8 @@ export default function IzinPage() {
   const [lampiran, setLampiran] = useState<LampiranResult | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<"image" | "pdf" | null>(null);
 
   const fetchLeaves = useCallback(() => {
     fetch("/api/leave")
@@ -158,108 +162,117 @@ export default function IzinPage() {
     return new Date(d).toLocaleDateString("id-ID");
   }
 
+  function openPreview(url: string) {
+    const isPdf = url.toLowerCase().endsWith(".pdf");
+    setPreviewType(isPdf ? "pdf" : "image");
+    setPreviewUrl(url);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Izin / Cuti</h1>
+      <div className="flex items-center gap-3">
+        <button onClick={() => router.back()} className="p-2 -ml-2 rounded-lg hover:bg-gray-100">
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
+        </button>
+        <h1 className="text-xl font-bold text-gray-900 flex-1">Izin / Cuti</h1>
         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-xl" onClick={openAdd}>
           <Plus className="w-4 h-4 mr-1" /> Ajukan
         </Button>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
-            <SheetHeader>
-              <SheetTitle>{editId ? "Ubah Pengajuan" : "Ajukan Izin / Cuti"}</SheetTitle>
-            </SheetHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4 px-1">
-              <div className="space-y-2">
-                <Label>Jenis</Label>
-                <select
-                  value={form.kategoriAbsensiId}
-                  onChange={(e) => setForm({ ...form, kategoriAbsensiId: e.target.value })}
-                  required
-                  className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="" disabled>Pilih jenis</option>
-                  {kategoriList.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.kode} — {k.keterangan}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      </div>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>{editId ? "Ubah Pengajuan" : "Ajukan Izin / Cuti"}</SheetTitle>
+          </SheetHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-4 px-1">
+            <div className="space-y-2">
+              <Label>Jenis</Label>
+              <select
+                value={form.kategoriAbsensiId}
+                onChange={(e) => setForm({ ...form, kategoriAbsensiId: e.target.value })}
+                required
+                className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="" disabled>Pilih jenis</option>
+                {kategoriList.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.kode} — {k.keterangan}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Tanggal Mulai</Label>
-                  <Input
-                    type="date"
-                    value={form.tanggalMulai}
-                    onChange={(e) => setForm({ ...form, tanggalMulai: e.target.value })}
-                    required
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tanggal Akhir</Label>
-                  <Input
-                    type="date"
-                    value={form.tanggalAkhir}
-                    onChange={(e) => setForm({ ...form, tanggalAkhir: e.target.value })}
-                    required
-                    className="h-11"
-                  />
-                </div>
-              </div>
-
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Alasan</Label>
-                <Textarea
-                  placeholder="Tuliskan alasan pengajuan..."
-                  value={form.alasan}
-                  onChange={(e) => setForm({ ...form, alasan: e.target.value })}
+                <Label>Tanggal Mulai</Label>
+                <Input
+                  type="date"
+                  value={form.tanggalMulai}
+                  onChange={(e) => setForm({ ...form, tanggalMulai: e.target.value })}
                   required
-                  rows={3}
-                  className="resize-none"
+                  className="h-11"
                 />
               </div>
-
               <div className="space-y-2">
-                <Label>Lampiran (opsional)</Label>
-                {lampiran ? (
-                  <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                    {lampiran.mimeType === "application/pdf" ? (
-                      <FileText className="w-5 h-5 text-red-500" />
-                    ) : (
-                      <img src={lampiran.base64} alt="preview" className="w-10 h-10 rounded object-cover" />
-                    )}
-                    <span className="text-sm text-gray-600 truncate flex-1">{lampiran.fileName}</span>
-                    <button type="button" onClick={() => setLampiran(null)} className="p-1">
-                      <X className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-11 justify-start gap-2 text-sm text-gray-500"
-                    onClick={() => setShowPicker(true)}
-                  >
-                    <Paperclip className="w-4 h-4" /> Tambah Lampiran
-                  </Button>
-                )}
+                <Label>Tanggal Akhir</Label>
+                <Input
+                  type="date"
+                  value={form.tanggalAkhir}
+                  onChange={(e) => setForm({ ...form, tanggalAkhir: e.target.value })}
+                  required
+                  className="h-11"
+                />
               </div>
+            </div>
 
-              <Button
-                type="submit"
-                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700"
-                disabled={loading}
-              >
-                {loading ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Kirim Pengajuan"}
-              </Button>
-            </form>
-          </SheetContent>
-        </Sheet>
-      </div>
+            <div className="space-y-2">
+              <Label>Alasan</Label>
+              <Textarea
+                placeholder="Tuliskan alasan pengajuan..."
+                value={form.alasan}
+                onChange={(e) => setForm({ ...form, alasan: e.target.value })}
+                required
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Lampiran (opsional)</Label>
+              {lampiran ? (
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  {lampiran.mimeType === "application/pdf" ? (
+                    <FileText className="w-5 h-5 text-red-500" />
+                  ) : (
+                    <img src={lampiran.base64} alt="preview" className="w-10 h-10 rounded object-cover" />
+                  )}
+                  <span className="text-sm text-gray-600 truncate flex-1">{lampiran.fileName}</span>
+                  <button type="button" onClick={() => setLampiran(null)} className="p-1">
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 justify-start gap-2 text-sm text-gray-500"
+                  onClick={() => setShowPicker(true)}
+                >
+                  <Paperclip className="w-4 h-4" /> Tambah Lampiran
+                </Button>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700"
+              disabled={loading}
+            >
+              {loading ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Kirim Pengajuan"}
+            </Button>
+          </form>
+        </SheetContent>
+      </Sheet>
 
       {/* Lampiran Picker Overlay */}
       {showPicker && !showCamera && (
@@ -335,15 +348,13 @@ export default function IzinPage() {
                       </p>
                     )}
                     {item.lampiranUrl && (
-                      <a
-                        href={item.lampiranUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => openPreview(item.lampiranUrl!)}
                         className="inline-flex items-center gap-1 mt-2 text-xs text-emerald-600 hover:underline"
                       >
                         <Paperclip className="w-3 h-3" />
                         Lihat Lampiran
-                      </a>
+                      </button>
                     )}
                   </div>
                   {statusIcon(item.status)}
@@ -351,6 +362,28 @@ export default function IzinPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Lampiran Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex items-center gap-3 p-3 border-b">
+            <button onClick={() => { setPreviewUrl(null); setPreviewType(null); }} className="p-2 -ml-2 rounded-lg hover:bg-gray-100">
+              <ArrowLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <span className="text-sm font-semibold flex-1">Preview Lampiran</span>
+            <button onClick={() => { setPreviewUrl(null); setPreviewType(null); }} className="p-2 -mr-2 rounded-lg hover:bg-gray-100">
+              <X className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            {previewType === "pdf" ? (
+              <iframe src={previewUrl} className="w-full h-full border-0" />
+            ) : (
+              <img src={previewUrl} alt="Lampiran" className="w-full h-auto object-contain" />
+            )}
+          </div>
         </div>
       )}
     </div>
