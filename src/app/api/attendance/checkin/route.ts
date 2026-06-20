@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { haversineDistance } from "@/lib/haversine";
-import { getDateInWIB, getDayNameInWIB, getNowWIB } from "@/lib/date";
+import { getDateInWIB, getDayNameInWIB, getNowWIB, getTimeInWIB } from "@/lib/date";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -70,6 +70,24 @@ export async function POST(req: NextRequest) {
   let menitTerlambat: number | null = null;
 
   if (schedule && !schedule.isLibur && schedule.jamMasuk) {
+    const { hours: nowH, minutes: nowM } = getTimeInWIB();
+
+    // Cek batas awal absen masuk
+    if (schedule.batasAwalMasuk) {
+      const [bukaH, bukaM] = schedule.batasAwalMasuk.split(":").map(Number);
+      if (nowH < bukaH || (nowH === bukaH && nowM < bukaM)) {
+        return NextResponse.json({ error: `Absen masuk belum dibuka (buka pukul ${schedule.batasAwalMasuk} WIB)` }, { status: 403 });
+      }
+    }
+
+    // Cek batas akhir absen masuk
+    if (schedule.batasAkhirMasuk) {
+      const [tutupH, tutupM] = schedule.batasAkhirMasuk.split(":").map(Number);
+      if (nowH > tutupH || (nowH === tutupH && nowM > tutupM)) {
+        return NextResponse.json({ error: `Absen masuk sudah ditutup (tutup pukul ${schedule.batasAkhirMasuk} WIB)` }, { status: 403 });
+      }
+    }
+
     const [h, m] = schedule.jamMasuk.split(":").map(Number);
     const nowWIB = getNowWIB();
     const jamMasukWIB = new Date(nowWIB);

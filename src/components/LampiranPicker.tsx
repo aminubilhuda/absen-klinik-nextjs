@@ -56,7 +56,7 @@ export default function LampiranPicker({ onCapture, onClose }: LampiranPickerPro
         <div className="flex items-center justify-between">
           <span className="text-base font-semibold">Lampirkan File</span>
           <button onClick={onClose} className="p-1">
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-muted-foreground/60" />
           </button>
         </div>
 
@@ -65,7 +65,7 @@ export default function LampiranPicker({ onCapture, onClose }: LampiranPickerPro
           className="w-full h-14 justify-start gap-3 text-base rounded-xl"
           onClick={handleCamera}
         >
-          <Camera className="w-5 h-5 text-emerald-600" />
+          <Camera className="w-5 h-5 text-primary" />
           Ambil Foto
         </Button>
 
@@ -74,7 +74,7 @@ export default function LampiranPicker({ onCapture, onClose }: LampiranPickerPro
           className="w-full h-14 justify-start gap-3 text-base rounded-xl"
           onClick={() => fileInputRef.current?.click()}
         >
-          <FileImage className="w-5 h-5 text-emerald-600" />
+          <FileImage className="w-5 h-5 text-primary" />
           Pilih File
         </Button>
 
@@ -86,7 +86,7 @@ export default function LampiranPicker({ onCapture, onClose }: LampiranPickerPro
           onChange={handleFilePick}
         />
 
-        <p className="text-xs text-gray-400 text-center">
+        <p className="text-xs text-muted-foreground/60 text-center">
           Format: gambar (JPG/PNG) atau PDF. Maks 5MB.
         </p>
       </div>

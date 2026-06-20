@@ -100,7 +100,7 @@ export default function AdminLokasiPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Lokasi Puskesmas</h1>
+      <h1 className="text-xl font-bold text-foreground">Lokasi Puskesmas</h1>
 
       <Card className="border-0 shadow-sm p-0 overflow-hidden rounded-2xl h-64">
         <MapContainer center={marker} zoom={16} className="h-full w-full" scrollWheelZoom={true}>
@@ -141,11 +141,11 @@ export default function AdminLokasiPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Latitude</Label>
-              <Input value={marker[0].toFixed(6)} readOnly className="h-11 bg-gray-50" />
+              <Input value={marker[0].toFixed(6)} readOnly className="h-11 bg-muted" />
             </div>
             <div className="space-y-2">
               <Label>Longitude</Label>
-              <Input value={marker[1].toFixed(6)} readOnly className="h-11 bg-gray-50" />
+              <Input value={marker[1].toFixed(6)} readOnly className="h-11 bg-muted" />
             </div>
           </div>
           <div className="space-y-2">
@@ -159,7 +159,7 @@ export default function AdminLokasiPage() {
                 max={1000}
                 className="h-11"
               />
-              <span className="text-sm text-gray-500">m</span>
+              <span className="text-sm text-muted-foreground/80">m</span>
             </div>
           </div>
 
@@ -176,7 +176,7 @@ export default function AdminLokasiPage() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700"
+            className="w-full h-11 bg-primary hover:bg-primary/90"
           >
             <Save className="w-4 h-4 mr-2" />
             {saving ? "Menyimpan..." : "Simpan Lokasi"}

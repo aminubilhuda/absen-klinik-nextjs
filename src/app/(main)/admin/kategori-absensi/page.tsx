@@ -124,7 +124,7 @@ export default function AdminKategoriAbsensiPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap">Kategori Absensi</h1>
+        <h1 className="text-xl font-bold text-foreground whitespace-nowrap">Kategori Absensi</h1>
         <div className="flex items-center gap-2 flex-1 justify-end">
           <Input
             placeholder="Cari kode atau keterangan..."
@@ -132,7 +132,7 @@ export default function AdminKategoriAbsensiPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             className="max-w-xs"
           />
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 whitespace-nowrap" onClick={openAdd}>
+          <Button size="sm" className="bg-primary hover:bg-primary/90 whitespace-nowrap" onClick={openAdd}>
             <Plus className="w-4 h-4 mr-1" /> Tambah
           </Button>
         </div>
@@ -154,14 +154,14 @@ export default function AdminKategoriAbsensiPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground/60">
                     Memuat...
                   </TableCell>
                 </TableRow>
               ) : items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-400">
-                    <Tags className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground/60">
+                    <Tags className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
                     Belum ada kategori
                   </TableCell>
                 </TableRow>
@@ -178,26 +178,26 @@ export default function AdminKategoriAbsensiPage() {
                             className="w-5 h-5 rounded border"
                             style={{ backgroundColor: item.warnaLabel }}
                           />
-                          <span className="text-xs text-gray-500">{item.warnaLabel}</span>
+                          <span className="text-xs text-muted-foreground/80">{item.warnaLabel}</span>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-muted-foreground/60">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${item.isIzin ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${item.isIzin ? "bg-accent/30 text-accent-foreground" : "bg-muted text-muted-foreground/60"}`}>
                         {item.isIzin ? "Ya" : "Tidak"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon-sm" onClick={() => openEdit(item)}>
-                          <Pencil className="w-4 h-4 text-gray-500" />
+                          <Pencil className="w-4 h-4 text-muted-foreground/60" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDelete(item.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -217,7 +217,7 @@ export default function AdminKategoriAbsensiPage() {
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-gray-500 px-2">{page} / {totalPages}</span>
+          <span className="text-sm text-muted-foreground/60 px-2">{page} / {totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -270,14 +270,14 @@ export default function AdminKategoriAbsensiPage() {
                 type="checkbox"
                 checked={form.isIzin}
                 onChange={(e) => setForm({ ...form, isIzin: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
               />
               <span className="text-sm font-medium">Kategori izin (muncul di form pengajuan izin)</span>
             </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSave} disabled={saving}>
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={saving}>
               {saving ? "Menyimpan..." : "Simpan"}
             </Button>
           </DialogFooter>

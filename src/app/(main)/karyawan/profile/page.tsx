@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User, Mail, Phone, Shield, Save, X, Lock } from "lucide-react";
+import { LogOut, User, Save, X, Lock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -82,33 +81,52 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Profil Saya</h1>
-        {!editing ? (
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-            <X className="w-4 h-4 mr-1" /> Batal
-          </Button>
-        )}
+    <>
+      {/* Pattern 8a: Curved teal header with avatar */}
+      <div className="rounded-b-4xl bg-primary pb-12">
+        <div className="px-5 pt-6 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-primary-foreground">Profil Saya</h1>
+          {!editing ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 rounded-xl font-medium"
+              onClick={() => setEditing(true)}
+            >
+              <svg className="size-3.5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Edit
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={() => setEditing(false)}
+            >
+              <X className="size-4 mr-1" /> Batal
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col items-center bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 text-white">
-        <Avatar className="w-20 h-20 border-4 border-white/30">
-          <AvatarFallback className="text-2xl font-bold bg-emerald-500">{initials}</AvatarFallback>
-        </Avatar>
-        <h2 className="text-lg font-semibold mt-3">{user?.name}</h2>
-        <Badge className="mt-2 bg-white/20 text-white border-0">
-          <Shield className="w-3 h-3 mr-1" />
-          {(user as any)?.role || "KARYAWAN"}
-        </Badge>
-      </div>
+      {/* Floating content */}
+      <div className="px-5 -mt-12 space-y-5">
+        {/* Avatar card — floating on top */}
+        <div className="flex flex-col items-center">
+          <div className="rounded-full p-1 bg-card shadow-sm">
+            <Avatar className="size-20">
+              <AvatarFallback className="text-2xl font-bold bg-accent/30 text-accent-foreground">{initials}</AvatarFallback>
+            </Avatar>
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mt-3">{user?.name}</h2>
+          <Badge className="mt-1.5 bg-accent/30 text-accent-foreground border-0">
+            <Shield className="size-3 mr-1" />
+            {(user as any)?.role || "KARYAWAN"}
+          </Badge>
+        </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-4 space-y-4">
+        {/* Info card */}
+        <div className="rounded-4xl bg-card p-5 shadow-sm space-y-4">
           <div className="space-y-2">
             <Label>Nama Lengkap</Label>
             <Input
@@ -121,7 +139,7 @@ export default function ProfilePage() {
 
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input value={user?.email || ""} disabled className="h-11 bg-gray-50 cursor-not-allowed" />
+            <Input value={user?.email || ""} disabled className="h-11 bg-muted cursor-not-allowed text-muted-foreground" />
           </div>
 
           <div className="space-y-2">
@@ -139,20 +157,19 @@ export default function ProfilePage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700"
+              className="w-full h-14 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 text-base font-semibold"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="size-4 mr-2" />
               {saving ? "Menyimpan..." : "Simpan Profil"}
             </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-4 space-y-4">
+        {/* Password card */}
+        <div className="rounded-4xl bg-card p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-gray-500" />
-            <h2 className="font-semibold text-gray-900">Ubah Password</h2>
+            <Lock className="size-4 text-muted-foreground" />
+            <h2 className="font-semibold text-foreground">Ubah Password</h2>
           </div>
 
           <div className="space-y-2">
@@ -183,20 +200,21 @@ export default function ProfilePage() {
             variant="outline"
             className="w-full h-11"
           >
-            <Lock className="w-4 h-4 mr-2" />
+            <Lock className="size-4 mr-2" />
             {savingPassword ? "Menyimpan..." : "Ubah Password"}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Button
-        variant="outline"
-        className="w-full h-12 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl"
-        onClick={() => signOut({ callbackUrl: "/login" })}
-      >
-        <LogOut className="w-5 h-5 mr-2" />
-        Keluar
-      </Button>
-    </div>
+        {/* Logout */}
+        <Button
+          variant="outline"
+          className="w-full h-14 rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive text-base font-medium"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+        >
+          <LogOut className="size-5 mr-2" />
+          Keluar
+        </Button>
+      </div>
+    </>
   );
 }

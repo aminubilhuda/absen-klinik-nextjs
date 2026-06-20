@@ -129,11 +129,15 @@ model ClinicSetting {
 }
 
 model WorkSchedule {
-  id        String    @id @default(cuid())
-  day       DayOfWeek @unique
-  jamMasuk  String?   @map("jam_masuk")
-  jamKeluar String?   @map("jam_keluar")
-  isLibur   Boolean   @default(false) @map("is_libur")
+  id              String    @id @default(cuid())
+  day             DayOfWeek @unique
+  jamMasuk        String?   @map("jam_masuk")
+  jamKeluar       String?   @map("jam_keluar")
+  batasAwalMasuk  String?   @map("batas_awal_masuk")
+  batasAkhirMasuk String?   @map("batas_akhir_masuk")
+  batasAwalKeluar  String?   @map("batas_awal_keluar")
+  batasAkhirKeluar String?   @map("batas_akhir_keluar")
+  isLibur         Boolean   @default(false) @map("is_libur")
 
   @@map("work_schedules")
 }

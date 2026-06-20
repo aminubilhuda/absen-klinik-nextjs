@@ -23,7 +23,7 @@ export default function AdminLayout({
   }, [session, status, router]);
 
   if (status === "loading") {
-    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" /></div>;
+    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   }
 
   if (!session || session.user.role !== "ADMIN") return null;
@@ -49,7 +49,7 @@ export default function AdminLayout({
 
       {/* Desktop */}
       <div className="hidden md:block">
-        <div className="fixed inset-0 left-64 bg-emerald-50/30 overflow-y-auto">
+        <div className="fixed inset-0 left-64 bg-muted/30 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-6 py-6">
             <main>{children}</main>
           </div>

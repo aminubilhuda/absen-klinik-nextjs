@@ -105,7 +105,7 @@ export default function CameraCaptureIzin({ onCapture, onClose }: CameraCaptureI
         <Button
           onClick={capture}
           disabled={capturing || !!error}
-          className="w-full h-14 text-base font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
+          className="w-full h-14 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60"
         >
           {capturing ? (
             <Loader2 className="w-5 h-5 animate-spin" />

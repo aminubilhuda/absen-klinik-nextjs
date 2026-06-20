@@ -160,10 +160,10 @@ export default function CameraCapture({ onCapture, onClose, loading, info }: Cam
       {/* Info Overlay */}
       <div className="bg-white rounded-t-2xl px-5 py-4 pb-8 space-y-3 safe-area-bottom">
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${info.inRange ? "bg-green-500" : "bg-red-500"}`} />
-          <span className="text-sm font-medium text-gray-800">{info.namaKlinik}</span>
+          <div className={`w-2.5 h-2.5 rounded-full ${info.inRange ? "bg-primary" : "bg-destructive"}`} />
+          <span className="text-sm font-medium text-foreground">{info.namaKlinik}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
           {info.jarak !== null && (
             <>
               <Navigation className="w-3 h-3" />
@@ -178,7 +178,7 @@ export default function CameraCapture({ onCapture, onClose, loading, info }: Cam
         <Button
           onClick={capture}
           disabled={loading || !!error}
-          className="w-full h-14 text-base font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
+          className="w-full h-14 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60"
         >
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />

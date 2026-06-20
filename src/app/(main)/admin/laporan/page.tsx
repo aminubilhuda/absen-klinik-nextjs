@@ -114,7 +114,7 @@ export default function AdminLaporanPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Laporan Kehadiran</h1>
+      <h1 className="text-xl font-bold text-foreground">Laporan Kehadiran</h1>
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4 space-y-3">
@@ -155,7 +155,7 @@ export default function AdminLaporanPage() {
           <Button
             onClick={loadData}
             disabled={loading}
-            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700"
+            className="w-full h-11 bg-primary hover:bg-primary/90"
           >
             <Search className="w-4 h-4 mr-2" />
             {loading ? "Memuat..." : "Tampilkan"}
@@ -166,22 +166,22 @@ export default function AdminLaporanPage() {
       {records.length > 0 && (
         <>
           <div className="grid grid-cols-3 gap-2">
-            <Card className="border-0 bg-emerald-50">
+            <Card className="border-0 bg-accent/30">
               <CardContent className="p-3 text-center">
-                <p className="text-lg font-bold text-emerald-700">{summary.hadir}</p>
-                <p className="text-xs text-emerald-600">Hadir</p>
+                <p className="text-lg font-bold text-accent-foreground">{summary.hadir}</p>
+                <p className="text-xs text-accent-foreground/80">Hadir</p>
               </CardContent>
             </Card>
-            <Card className="border-0 bg-amber-50">
+            <Card className="border-0 bg-chart-3/20">
               <CardContent className="p-3 text-center">
-                <p className="text-lg font-bold text-amber-700">{summary.terlambat}</p>
-                <p className="text-xs text-amber-600">Terlambat</p>
+                <p className="text-lg font-bold text-chart-3">{summary.terlambat}</p>
+                <p className="text-xs text-chart-3/80">Terlambat</p>
               </CardContent>
             </Card>
-            <Card className="border-0 bg-red-50">
+            <Card className="border-0 bg-destructive/10">
               <CardContent className="p-3 text-center">
-                <p className="text-lg font-bold text-red-600">{summary.alpha}</p>
-                <p className="text-xs text-red-500">Alpha</p>
+                <p className="text-lg font-bold text-destructive">{summary.alpha}</p>
+                <p className="text-xs text-destructive">Alpha</p>
               </CardContent>
             </Card>
           </div>
@@ -189,14 +189,14 @@ export default function AdminLaporanPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="flex-1 h-11 border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl"
+              className="flex-1 h-11 border-accent text-accent-foreground hover:bg-accent/30 rounded-xl"
               onClick={() => exportData("xlsx")}
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
             </Button>
             <Button
               variant="outline"
-              className="flex-1 h-11 border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl"
+              className="flex-1 h-11 border-accent text-accent-foreground hover:bg-accent/30 rounded-xl"
               onClick={() => exportData("pdf")}
             >
               <FileText className="w-4 h-4 mr-2" /> PDF
@@ -226,7 +226,7 @@ export default function AdminLaporanPage() {
                       <TableCell>{r.waktuCheckin ? (() => { const d = new Date(r.waktuCheckin); return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`; })() : "-"}</TableCell>
                       <TableCell>{r.waktuCheckout ? (() => { const d = new Date(r.waktuCheckout); return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`; })() : "-"}</TableCell>
                       <TableCell>
-                        <Badge className={r.status === "TEPAT_WAKTU" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
+                        <Badge className={r.status === "TEPAT_WAKTU" ? "bg-accent/30 text-accent-foreground" : "bg-chart-3/20 text-chart-3"}>
                           {r.status === "TEPAT_WAKTU" ? "Tepat Waktu" : `Terlambat ${r.menitTerlambat ?? 0}m`}
                         </Badge>
                       </TableCell>

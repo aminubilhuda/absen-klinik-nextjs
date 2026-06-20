@@ -55,14 +55,14 @@ export default function RegisterPage() {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 mb-2">
-          <UserPlus className="w-8 h-8 text-emerald-600" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/30 mb-2">
+          <UserPlus className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold text-emerald-900">Daftar Akun</h1>
-        <p className="text-sm text-gray-500">Daftar sebagai karyawan puskesmas</p>
+        <h1 className="text-2xl font-bold text-foreground">Daftar Akun</h1>
+        <p className="text-sm text-muted-foreground">Daftar sebagai karyawan puskesmas</p>
       </div>
 
-      <Card className="border-0 shadow-lg shadow-emerald-100/50">
+      <Card className="border-0 shadow-lg shadow-primary/10">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Registrasi</CardTitle>
           <CardDescription>Isi data diri Anda dengan benar</CardDescription>
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -127,15 +127,15 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 p-3 rounded-lg">{error}</div>
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">{error}</div>
             )}
             {success && (
-              <div className="text-sm text-emerald-600 bg-emerald-50 p-3 rounded-lg">{success}</div>
+              <div className="text-sm text-accent-foreground bg-accent/30 p-3 rounded-lg">{success}</div>
             )}
 
             <Button
               type="submit"
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-base"
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-base"
               disabled={loading}
             >
               {loading ? "Memproses..." : "Daftar"}
@@ -143,9 +143,9 @@ export default function RegisterPage() {
           </form>
         </CardContent>
         <CardFooter className="justify-center pb-6">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Sudah punya akun?{" "}
-            <Link href="/login" className="text-emerald-600 font-medium hover:underline">
+            <Link href="/login" className="text-primary font-medium hover:underline">
               Masuk
             </Link>
           </p>

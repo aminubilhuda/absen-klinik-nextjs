@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   try {
     const { prisma } = await import("@/lib/prisma");
     const body = await req.json();
-    const { unitKerjaId, bulan, tahun } = body;
+    const { unitKerjaId, userId, bulan, tahun } = body;
 
     if (!bulan || !tahun) {
       return NextResponse.json({ error: "Parameter bulan dan tahun wajib diisi" }, { status: 400 });
@@ -42,12 +42,17 @@ export async function POST(req: Request) {
     const startDate = new Date(tahunNum, bulanNum - 1, 1);
     const endDate = new Date(tahunNum, bulanNum - 1, totalHari);
 
+    const userIdFilter: any = {};
+    if (userId && Array.isArray(userId) && userId.length > 0) {
+      userIdFilter.id = { in: userId };
+    } else {
+      userIdFilter.role = "KARYAWAN";
+      userIdFilter.status = "ACTIVE";
+      if (unitKerjaId) userIdFilter.unitKerjaId = unitKerjaId;
+    }
+
     const userIds = (await prisma.user.findMany({
-      where: {
-        role: "KARYAWAN",
-        status: "ACTIVE",
-        ...(unitKerjaId ? { unitKerjaId } : {}),
-      },
+      where: userIdFilter,
       select: { id: true },
     })).map((u) => u.id);
 
@@ -222,12 +227,12 @@ export async function POST(req: Request) {
 
           if (schedule?.jamKeluar) {
             const jamKeluarMenit = parseTimeToMinutes(schedule.jamKeluar);
-            const checkoutMenit = date.getHours() * 60 + date.getMinutes();
-            const checkoutTotal = checkout - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-            const checkoutMenitFull = Math.round(checkoutTotal / 60000);
+            // Hitung menit checkout dalam WIB dari timestamp UTC yang sudah +7
+            const checkoutWIB = new Date(checkout);
+            const checkoutMenitWIB = checkoutWIB.getUTCHours() * 60 + checkoutWIB.getUTCMinutes();
             const lemburMulai = jamKeluarMenit + 60;
-            if (checkoutMenitFull > lemburMulai) {
-              totalLembur += checkoutMenitFull - lemburMulai;
+            if (checkoutMenitWIB > lemburMulai) {
+              totalLembur += checkoutMenitWIB - lemburMulai;
             }
           }
         } else if (att && att.waktuCheckin && !att.waktuCheckout) {

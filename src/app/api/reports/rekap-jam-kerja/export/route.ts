@@ -29,7 +29,7 @@ const BULAN_INDONESIA = [
 
 const HARI_INDONESIA = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-async function getReportData(unitKerjaId: string | null, bulan: string, tahun: string) {
+async function getReportData(unitKerjaId: string | null, bulan: string, tahun: string, userId?: string[]) {
   const { prisma } = await import("@/lib/prisma");
 
   const bulanNum = parseInt(bulan);
@@ -38,12 +38,17 @@ async function getReportData(unitKerjaId: string | null, bulan: string, tahun: s
   const startDate = new Date(tahunNum, bulanNum - 1, 1);
   const endDate = new Date(tahunNum, bulanNum - 1, totalHari);
 
+  const userIdFilter: any = {};
+  if (userId && Array.isArray(userId) && userId.length > 0) {
+    userIdFilter.id = { in: userId };
+  } else {
+    userIdFilter.role = "KARYAWAN";
+    userIdFilter.status = "ACTIVE";
+    if (unitKerjaId) userIdFilter.unitKerjaId = unitKerjaId;
+  }
+
   const userIds = (await prisma.user.findMany({
-    where: {
-      role: "KARYAWAN",
-      status: "ACTIVE",
-      ...(unitKerjaId ? { unitKerjaId } : {}),
-    },
+    where: userIdFilter,
     select: { id: true },
   })).map((u) => u.id);
 
@@ -258,13 +263,13 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { unitKerjaId, bulan, tahun, format } = body;
+    const { unitKerjaId, userId, bulan, tahun, format } = body;
 
     if (!bulan || !tahun || !format) {
       return NextResponse.json({ error: "Parameter tidak lengkap" }, { status: 400 });
     }
 
-    const report = await getReportData(unitKerjaId || null, bulan, tahun);
+    const report = await getReportData(unitKerjaId || null, bulan, tahun, userId);
 
     if (format === "pdf") {
       return generatePdf(report);
@@ -525,9 +530,11 @@ async function generatePdf(report: Awaited<ReturnType<typeof getReportData>>) {
 }
 
 async function generateXlsx(report: Awaited<ReturnType<typeof getReportData>>) {
-  const XLSX = await import("xlsx");
+  const ExcelJS = await import("exceljs");
 
-  const wb = XLSX.utils.book_new();
+  const wb = new ExcelJS.default.Workbook();
+  wb.creator = "Absensi Puskesmas";
+  wb.created = new Date();
 
   const nowWIB = getNowWIB();
   const cetakStr = `Cetak pada ${HARI_INDONESIA[nowWIB.getUTCDay()]}, ${nowWIB.getUTCDate()} ${BULAN_INDONESIA[nowWIB.getUTCMonth() + 1]} ${nowWIB.getUTCFullYear()} ${String(nowWIB.getUTCHours()).padStart(2, "0")}:${String(nowWIB.getUTCMinutes()).padStart(2, "0")}`;
@@ -538,77 +545,158 @@ async function generateXlsx(report: Awaited<ReturnType<typeof getReportData>>) {
 
   const totalCols = 2 + report.totalHari + 5;
 
-  const titleRow: any[] = new Array(totalCols).fill("");
-  titleRow[0] = "PEMERINTAH KABUPATEN TUBAN";
+  // ── COLOR PALETTE ──
+  const C = {
+    white:   { argb: "FFFFFFFF" },
+    black:   { argb: "FF000000" },
+    headerBg:  { argb: "FF4472C4" },
+    headerFg:  { argb: "FFFFFFFF" },
+    border:    { argb: "FF999999" },
+    accentBg:  { argb: "FFE2EFDA" },
+    dangerBg:  { argb: "FFFCE4EC" },
+    warnBg:    { argb: "FFFFF8E1" },
+    mutedBg:   { argb: "FFF5F5F5" },
+    titleBg:   { argb: "FF1F4E79" },
+  };
 
-  const subtitleRow: any[] = new Array(totalCols).fill("");
-  subtitleRow[0] = "Laporan Perhitungan Presensi Bulanan";
-
-  const monthRow: any[] = new Array(totalCols).fill("");
-  monthRow[0] = `${BULAN_INDONESIA[report.bulan]} ${report.tahun}`;
-
-  const infoRow: any[] = new Array(totalCols).fill("");
-  infoRow[0] = unitStr;
-  infoRow[totalCols - 1] = cetakStr;
-
-  const emptyRow: any[] = new Array(totalCols).fill("");
-
-  const headerRow1: any[] = ["", ""];
-  const headerRow2: any[] = ["No", "Pegawai"];
-
-  for (const hari of report.daftarHari) {
-    headerRow1.push(`${hari.tanggal}/${report.bulan}`);
-    headerRow2.push("");
+  function borderStyle() {
+    return {
+      top:    { style: "thin" as const, color: C.border },
+      bottom: { style: "thin" as const, color: C.border },
+      left:   { style: "thin" as const, color: C.border },
+      right:  { style: "thin" as const, color: C.border },
+    };
   }
-  headerRow1.push("TJK", "KJK", "TOTAL KJK", "TJL", "TKS");
-  headerRow2.push("TJK", "KJK", "TOTAL KJK", "TJL", "TKS");
 
-  const dataRows = report.data.map((row, i) => {
-    const r: any[] = [i + 1, row.nip ? `${row.nip}\n${row.nama}` : row.nama];
-    for (let j = 0; j < report.totalHari; j++) {
-      const h = row.harian[j];
-      if (h.type === "checkmark") r.push("✔");
-      else if (h.type === "code") r.push(h.value || "");
-      else if (h.type === "hours") r.push(h.value || "");
-      else if (h.type === "holiday") r.push("LIBUR");
-      else if (h.type === "sunday") r.push("MINGGU");
-      else if (h.type === "liburJadwal") r.push("-");
-      else r.push("");
-    }
-    r.push(minutesToHM(row.tjkMenit));
-    r.push(minutesToHM(row.kjkMenit));
-    r.push(minutesToHM(row.kjkMenit));
-    r.push(minutesToHM(row.tjlMenit));
-    r.push(row.tks);
-    return r;
+  function fontBase(bold = false, sz = 10, color = C.black) {
+    return { name: "Calibri", size: sz, bold, color };
+  }
+
+  // ── SHEET 1 : Presensi ──
+  const ws = wb.addWorksheet("Presensi Bulanan", {
+    pageSetup: { orientation: "landscape", paperSize: 9, fitToPage: true, margins: {
+      left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2,
+    }},
   });
 
-  const wsData = [titleRow, subtitleRow, monthRow, infoRow, emptyRow, headerRow1, headerRow2, ...dataRows];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  // Row 1 – Title
+  const r1 = ws.addRow(["PEMERINTAH KABUPATEN TUBAN"]);
+  ws.mergeCells(1, 1, 1, totalCols);
+  r1.eachCell((c) => { c.font = fontBase(true, 14, C.white); c.fill = { type: "pattern", pattern: "solid", fgColor: C.titleBg }; c.alignment = { horizontal: "center", vertical: "middle" }; });
 
-  const merges: any[] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } },
-    { s: { r: 2, c: 0 }, e: { r: 2, c: totalCols - 1 } },
-    { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
-    { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } },
-    { s: { r: 5, c: 2 }, e: { r: 5, c: 1 + report.totalHari } },
-    { s: { r: 5, c: 2 + report.totalHari }, e: { r: 5, c: 6 + report.totalHari } },
+  // Row 2 – Subtitle
+  const r2 = ws.addRow(["Laporan Perhitungan Presensi Bulanan"]);
+  ws.mergeCells(2, 1, 2, totalCols);
+  r2.eachCell((c) => { c.font = fontBase(true, 12); c.alignment = { horizontal: "center", vertical: "middle" }; });
+
+  // Row 3 – Month/Year
+  const r3 = ws.addRow([`${BULAN_INDONESIA[report.bulan]} ${report.tahun}`]);
+  ws.mergeCells(3, 1, 3, totalCols);
+  r3.eachCell((c) => { c.font = fontBase(true, 11); c.alignment = { horizontal: "center", vertical: "middle" }; });
+
+  // Row 4 – Info baris
+  const r4 = ws.addRow([]);
+  ws.mergeCells(4, 1, 4, totalCols - 1);
+  r4.getCell(1).value = unitStr;
+  r4.getCell(1).font = fontBase(false, 9);
+  r4.getCell(totalCols).value = cetakStr;
+  r4.getCell(totalCols).font = fontBase(false, 8, { argb: "FF888888" });
+  r4.getCell(totalCols).alignment = { horizontal: "right" };
+
+  // Header row 1 (label grup — di-merge horizontal)
+  const hd1: (string | null)[] = Array.from({ length: totalCols }, () => null);
+  const r5 = ws.addRow(hd1);
+  ws.mergeCells(5, 3, 5, 2 + report.totalHari);
+  ws.mergeCells(5, 3 + report.totalHari, 5, 7 + report.totalHari);
+  ws.getCell(5, 3).value = `Total Jam Kerja Harian (${BULAN_INDONESIA[report.bulan]} ${report.tahun})`;
+  ws.getCell(5, 3 + report.totalHari).value = "Ringkasan";
+
+  // Header row 2 — tanggal, No, Pegawai, dan label ringkasan
+  const hd2: (string | null)[] = ["No", "Pegawai"];
+  for (let i = 0; i < report.totalHari; i++) hd2.push(`${i + 1}/${report.bulan}`);
+  hd2.push("TJK", "KJK", "TOTAL KJK", "TJL", "TKS");
+  const r6 = ws.addRow(hd2);
+
+  // Merge vertical No & Pegawai (row 5-6)
+  ws.mergeCells(5, 1, 6, 1);
+  ws.mergeCells(5, 2, 6, 2);
+  ws.getCell(5, 1).value = "No";
+  ws.getCell(5, 2).value = "Pegawai";
+
+  // Style header rows
+  [r5, r6].forEach((row) => {
+    row.eachCell((c) => {
+      c.font = fontBase(true, 9, C.headerFg);
+      c.fill = { type: "pattern", pattern: "solid", fgColor: C.headerBg };
+      c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      c.border = borderStyle();
+    });
+  });
+
+  // Data rows
+  for (let i = 0; i < report.data.length; i++) {
+    const row = report.data[i];
+    const vals: any[] = [i + 1, row.nip ? `${row.nip}\n${row.nama}` : row.nama];
+
+    for (let j = 0; j < report.totalHari; j++) {
+      const h = row.harian[j];
+      if (h.type === "checkmark") vals.push("✔");
+      else if (h.type === "code") vals.push(h.value || "");
+      else if (h.type === "hours") vals.push(h.value || "");
+      else if (h.type === "holiday") vals.push("LIBUR");
+      else if (h.type === "sunday") vals.push("MINGGU");
+      else if (h.type === "liburJadwal") vals.push("-");
+      else vals.push("");
+    }
+    vals.push(
+      minutesToHM(row.tjkMenit),
+      minutesToHM(row.kjkMenit),
+      minutesToHM(row.kjkMenit),
+      minutesToHM(row.tjlMenit),
+      row.tks
+    );
+
+    const r = ws.addRow(vals);
+    const isEven = i % 2 === 0;
+    r.eachCell((c, col) => {
+      c.font = fontBase(false, 9);
+      c.alignment = { horizontal: col === 1 ? "center" : col === 2 ? "left" : "center", vertical: "middle", wrapText: true };
+      c.border = borderStyle();
+      if (!isEven) c.fill = { type: "pattern", pattern: "solid", fgColor: C.mutedBg };
+
+      // Highlight KJK / TOTAL KJK merah kalau > 0
+      const headerLabel = r5.getCell(col).value?.toString() || "";
+      if ((headerLabel === "KJK" || headerLabel === "TOTAL KJK") && (typeof c.value === "string" && c.value !== "0J0M")) {
+        c.font = fontBase(true, 9, { argb: "FFD32F2F" });
+      }
+      if (headerLabel === "TKS" && c.value && Number(c.value) > 0) {
+        c.font = fontBase(true, 9, { argb: "FFD32F2F" });
+      }
+    });
+  }
+
+  // Column widths
+  const colWidths: any[] = [
+    { width: 5 },   // No
+    { width: 32 },  // Pegawai
+    ...report.daftarHari.map(() => ({ width: 6.5 })),
+    { width: 8 },   // TJK
+    { width: 8 },   // KJK
+    { width: 11 },  // TOTAL KJK
+    { width: 8 },   // TJL
+    { width: 5 },   // TKS
   ];
-  ws["!merges"] = merges;
+  ws.columns = colWidths;
 
-  ws["!cols"] = [
-    { wch: 5 },
-    { wch: 28 },
-    ...report.daftarHari.map(() => ({ wch: 6 })),
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 10 },
-    { wch: 8 },
-    { wch: 5 },
-  ];
+  // Row heights
+  [1, 2, 3, 4].forEach((rn) => { ws.getRow(rn).height = 22; });
+  [5, 6].forEach((rn) => { ws.getRow(rn).height = 32; });
+  for (let rn = 7; rn < 7 + report.data.length; rn++) {
+    ws.getRow(rn).height = 20;
+  }
 
-  XLSX.utils.book_append_sheet(wb, ws, "Presensi Bulanan");
+  // ── SHEET 2 : Legenda ──
+  const ws2 = wb.addWorksheet("Legenda");
 
   const kodeTotalRows = [
     ["TJK", "Total Jam Kerja"],
@@ -626,14 +714,23 @@ async function generateXlsx(report: Awaited<ReturnType<typeof getReportData>>) {
 
   const maxRows = Math.max(report.kategoriList.length, kodeTotalRows.length, warnaRows.length);
 
-  const legTitleRow: any[] = ["a. Kategori Absensi", "", "b. Kode Total", "", "c. Kode Warna", ""];
-  const legHeaderRow: any[] = ["Kode", "Keterangan", "Kode", "Keterangan", "Warna", "Keterangan"];
-  const legBody: any[] = [];
+  // Title row
+  const lt = ws2.addRow(["a. Kategori Absensi", "", "b. Kode Total", "", "c. Kode Warna", ""]);
+  ws2.mergeCells(1, 1, 1, 2);
+  ws2.mergeCells(1, 3, 1, 4);
+  ws2.mergeCells(1, 5, 1, 6);
+  lt.eachCell((c) => { c.font = fontBase(true, 10); c.alignment = { horizontal: "center" }; });
+
+  // Header row
+  const lh = ws2.addRow(["Kode", "Keterangan", "Kode", "Keterangan", "Warna", "Keterangan"]);
+  lh.eachCell((c) => { c.font = fontBase(true, 9); c.fill = { type: "pattern", pattern: "solid", fgColor: C.headerBg }; c.font = fontBase(true, 9, C.headerFg); c.alignment = { horizontal: "center" }; c.border = borderStyle(); });
+
+  // Body rows
   for (let i = 0; i < maxRows; i++) {
     const kat = report.kategoriList[i];
     const kt = kodeTotalRows[i];
     const wr = warnaRows[i];
-    legBody.push([
+    const r = ws2.addRow([
       kat ? kat.kode : "",
       kat ? kat.keterangan : "",
       kt ? kt[0] : "",
@@ -641,28 +738,20 @@ async function generateXlsx(report: Awaited<ReturnType<typeof getReportData>>) {
       wr ? wr[0] : "",
       wr ? wr[1] : "",
     ]);
+    r.eachCell((c) => { c.font = fontBase(false, 9); c.alignment = { vertical: "middle" }; c.border = borderStyle(); });
   }
 
-  const legData = [legTitleRow, legHeaderRow, ...legBody];
-  const ws2 = XLSX.utils.aoa_to_sheet(legData);
-
-  ws2["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-    { s: { r: 0, c: 2 }, e: { r: 0, c: 3 } },
-    { s: { r: 0, c: 4 }, e: { r: 0, c: 5 } },
+  ws2.columns = [
+    { width: 14 },
+    { width: 40 },
+    { width: 14 },
+    { width: 42 },
+    { width: 14 },
+    { width: 40 },
   ];
 
-  ws2["!cols"] = [
-    { wch: 12 },
-    { wch: 40 },
-    { wch: 12 },
-    { wch: 40 },
-    { wch: 12 },
-    { wch: 40 },
-  ];
-  XLSX.utils.book_append_sheet(wb, ws2, "Legenda");
-
-  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  // ── WRITE ──
+  const buf = await wb.xlsx.writeBuffer();
 
   return new NextResponse(buf, {
     headers: {

@@ -76,25 +76,25 @@ export default function AdminKaryawanPage() {
 
   const statusBadge = (s: string) => {
     const map: Record<string, string> = {
-      PENDING: "bg-amber-100 text-amber-700",
-      ACTIVE: "bg-emerald-100 text-emerald-700",
-      REJECTED: "bg-red-100 text-red-600",
-      DEACTIVATED: "bg-gray-100 text-gray-500",
+      PENDING: "bg-chart-3/20 text-chart-3",
+      ACTIVE: "bg-accent/30 text-accent-foreground",
+      REJECTED: "bg-destructive/10 text-destructive",
+      DEACTIVATED: "bg-muted text-muted-foreground/60",
     };
-    return map[s] || "bg-gray-100";
+    return map[s] || "bg-muted";
   };
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Data Karyawan</h1>
+      <h1 className="text-xl font-bold text-foreground">Data Karyawan</h1>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
         <Input
           placeholder="Cari nama atau email..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="pl-10 h-11 bg-white border-gray-200"
+          className="pl-10 h-11 bg-card border-border"
         />
       </div>
 
@@ -104,19 +104,19 @@ export default function AdminKaryawanPage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm">
+                  <AvatarFallback className="bg-accent/30 text-accent-foreground text-sm">
                     {user.nama.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{user.nama}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className="text-xs text-muted-foreground/80 truncate">{user.email}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge className={`${statusBadge(user.status)} border-0 text-xs`}>
                       {user.status}
                     </Badge>
                     {user.unitKerjaId && (
-                      <Badge variant="outline" className="text-[10px] text-gray-400 border-gray-200">
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground/60 border-border">
                         {unitKerjaList.find((u) => u.id === user.unitKerjaId)?.nama || "-"}
                       </Badge>
                     )}
@@ -157,7 +157,7 @@ export default function AdminKaryawanPage() {
                 <div className="flex gap-2 mt-3">
                   <Button
                     size="sm"
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+                    className="flex-1 bg-primary hover:bg-primary/90 rounded-lg"
                     onClick={() => handleAction(user.id, "approve")}
                   >
                     <CheckCircle className="w-4 h-4 mr-1" /> Setujui
@@ -165,7 +165,7 @@ export default function AdminKaryawanPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50 rounded-lg"
+                    className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 rounded-lg"
                     onClick={() => handleAction(user.id, "reject")}
                   >
                     <XCircle className="w-4 h-4 mr-1" /> Tolak
@@ -177,7 +177,7 @@ export default function AdminKaryawanPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="w-full border-gray-200 text-gray-500 rounded-lg"
+                    className="w-full border-border text-muted-foreground/60 rounded-lg"
                     onClick={() => handleDeactivate(user.id)}
                   >
                     Nonaktifkan
@@ -190,8 +190,8 @@ export default function AdminKaryawanPage() {
         {filtered.length === 0 && (
           <Card className="border-0">
             <CardContent className="p-8 text-center">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">Tidak ada data karyawan</p>
+              <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground/80">Tidak ada data karyawan</p>
             </CardContent>
           </Card>
         )}
@@ -207,7 +207,7 @@ export default function AdminKaryawanPage() {
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-gray-500 px-2">
+          <span className="text-sm text-muted-foreground/60 px-2">
             {page} / {totalPages}
           </span>
           <Button

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Calendar, Clock, AlertTriangle, CheckCircle, XCircle, Leaf } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, Clock, AlertTriangle, CheckCircle, XCircle, MapPin } from "lucide-react";
 
 interface TodayData {
   checkin: boolean;
@@ -17,10 +16,10 @@ interface TodayData {
 }
 
 const statDefs = [
-  { label: "Hadir", key: "hadir" as const, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
-  { label: "Terlambat", key: "terlambat" as const, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50" },
-  { label: "Izin", key: "izin" as const, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50" },
-  { label: "Alpha", key: "alpha" as const, icon: XCircle, color: "text-red-600", bg: "bg-red-50" },
+  { label: "Hadir", key: "hadir" as const, icon: CheckCircle, color: "text-accent-foreground", bg: "bg-accent/30" },
+  { label: "Terlambat", key: "terlambat" as const, icon: AlertTriangle, color: "text-chart-3", bg: "bg-chart-3/20" },
+  { label: "Izin", key: "izin" as const, icon: Calendar, color: "text-secondary-foreground", bg: "bg-secondary" },
+  { label: "Alpha", key: "alpha" as const, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
 ];
 
 export default function KaryawanDashboard() {
@@ -133,54 +132,58 @@ export default function KaryawanDashboard() {
   const statusOnline = !todayData ? false : todayData.isOnLeave ? false : todayData.checkin;
 
   return (
-    <div className="space-y-5">
-      <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <Leaf className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-emerald-100">Selamat datang,</p>
-            <p className="font-semibold text-lg">{session?.user?.name || "Karyawan"}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-emerald-100">
-          <Clock className="w-4 h-4" />
-          <span>
-            {dayNames[now.getDay()]}, {now.getDate()} {monthNames[now.getMonth()]} {now.getFullYear()}
-          </span>
-        </div>
-      </div>
-
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-4">
+    <>
+      {/* Pattern 8a: Curved teal header */}
+      <div className="rounded-b-4xl bg-primary pb-12">
+        <div className="px-5 pt-6">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${statusOnline ? "bg-emerald-400" : "bg-amber-400"} animate-pulse`} />
             <div>
-              <p className="text-sm text-gray-500">Status Hari Ini</p>
-              <p className="font-semibold text-gray-800">{statusText}</p>
+              <p className="text-sm text-primary-foreground/80">Selamat datang,</p>
+              <p className="font-semibold text-lg text-primary-foreground">{session?.user?.name || "Karyawan"}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2 text-sm text-primary-foreground/80 mt-2">
+            <Clock className="size-4" />
+            <span>
+              {dayNames[now.getDay()]}, {now.getDate()} {monthNames[now.getMonth()]} {now.getFullYear()}
+            </span>
+          </div>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {statDefs.map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
+      {/* Floating content */}
+      <div className="px-5 -mt-4 space-y-5">
+        {/* Status card */}
+        <div className="rounded-4xl bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+            <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-accent">
+              <MapPin className="size-4.5 text-accent-foreground" />
+              <span className={`absolute -right-0.5 -top-0.5 size-3 rounded-full ring-2 ring-card ${statusOnline ? "bg-chart-2" : "bg-chart-3"}`} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Status Hari Ini</p>
+              <p className="truncate text-sm font-medium text-card-foreground">{statusText}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {statDefs.map((stat) => (
+            <div key={stat.label} className="rounded-4xl bg-card p-5 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                <div className={`size-10 ${stat.bg} rounded-2xl flex items-center justify-center`}>
+                  <stat.icon className={`size-5 ${stat.color}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats[stat.key]}</p>
-                  <p className="text-xs text-gray-500">{stat.label}</p>
+                  <p className="text-2xl font-bold text-card-foreground">{stats[stat.key]}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

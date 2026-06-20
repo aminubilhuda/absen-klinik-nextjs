@@ -38,12 +38,28 @@ export async function PUT(req: NextRequest) {
     if (s.jamKeluar !== null && s.jamKeluar !== undefined && s.jamKeluar !== "" && !timeRegex.test(s.jamKeluar)) {
       return NextResponse.json({ error: `Format jam keluar tidak valid: ${s.jamKeluar}` }, { status: 400 });
     }
+    if (s.batasAwalMasuk !== null && s.batasAwalMasuk !== undefined && s.batasAwalMasuk !== "" && !timeRegex.test(s.batasAwalMasuk)) {
+      return NextResponse.json({ error: `Format batas awal masuk tidak valid: ${s.batasAwalMasuk}` }, { status: 400 });
+    }
+    if (s.batasAkhirMasuk !== null && s.batasAkhirMasuk !== undefined && s.batasAkhirMasuk !== "" && !timeRegex.test(s.batasAkhirMasuk)) {
+      return NextResponse.json({ error: `Format batas akhir masuk tidak valid: ${s.batasAkhirMasuk}` }, { status: 400 });
+    }
+    if (s.batasAwalKeluar !== null && s.batasAwalKeluar !== undefined && s.batasAwalKeluar !== "" && !timeRegex.test(s.batasAwalKeluar)) {
+      return NextResponse.json({ error: `Format batas awal keluar tidak valid: ${s.batasAwalKeluar}` }, { status: 400 });
+    }
+    if (s.batasAkhirKeluar !== null && s.batasAkhirKeluar !== undefined && s.batasAkhirKeluar !== "" && !timeRegex.test(s.batasAkhirKeluar)) {
+      return NextResponse.json({ error: `Format batas akhir keluar tidak valid: ${s.batasAkhirKeluar}` }, { status: 400 });
+    }
 
     await prisma.workSchedule.update({
       where: { id: s.id },
       data: {
         jamMasuk: s.jamMasuk || null,
         jamKeluar: s.jamKeluar || null,
+        batasAwalMasuk: s.batasAwalMasuk || null,
+        batasAkhirMasuk: s.batasAkhirMasuk || null,
+        batasAwalKeluar: s.batasAwalKeluar || null,
+        batasAkhirKeluar: s.batasAkhirKeluar || null,
         isLibur: Boolean(s.isLibur),
       },
     });

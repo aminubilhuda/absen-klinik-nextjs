@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { haversineDistance } from "@/lib/haversine";
-import { getDateInWIB, getNowWIB } from "@/lib/date";
+import { getDateInWIB, getNowWIB, getDayNameInWIB, getTimeInWIB } from "@/lib/date";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -47,8 +47,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Anda belum check-in hari ini" }, { status: 400 });
   }
 
-  if (existing.waktuCheckout) {
-    return NextResponse.json({ error: "Anda sudah check-out hari ini" }, { status: 400 });
+  const sudahCheckout = !!existing.waktuCheckout;
+
+  // Cek batas waktu absen pulang
+  const schedule = await prisma.workSchedule.findFirst({
+    where: { day: getDayNameInWIB() as any },
+  });
+
+  if (schedule && !schedule.isLibur && schedule.jamKeluar) {
+    const { hours: nowH, minutes: nowM } = getTimeInWIB();
+
+    if (schedule.batasAwalKeluar) {
+      const [bukaH, bukaM] = schedule.batasAwalKeluar.split(":").map(Number);
+      if (nowH < bukaH || (nowH === bukaH && nowM < bukaM)) {
+        return NextResponse.json({ error: `Absen pulang belum dibuka (buka pukul ${schedule.batasAwalKeluar} WIB)` }, { status: 403 });
+      }
+    }
+
+    if (schedule.batasAkhirKeluar) {
+      const [tutupH, tutupM] = schedule.batasAkhirKeluar.split(":").map(Number);
+      if (nowH > tutupH || (nowH === tutupH && nowM > tutupM)) {
+        return NextResponse.json({ error: `Absen pulang sudah ditutup (tutup pukul ${schedule.batasAkhirKeluar} WIB)` }, { status: 403 });
+      }
+    }
   }
 
   let fotoCheckout: string | null = null;
@@ -81,5 +102,5 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ message: "Absen keluar berhasil" });
+  return NextResponse.json({ message: sudahCheckout ? "Absen keluar berhasil diperbarui" : "Absen keluar berhasil" });
 }

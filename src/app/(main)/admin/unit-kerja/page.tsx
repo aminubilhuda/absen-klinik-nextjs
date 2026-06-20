@@ -110,10 +110,10 @@ export default function AdminUnitKerjaPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Unit Kerja</h1>
+        <h1 className="text-xl font-bold text-foreground">Unit Kerja</h1>
         <Button
           size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700"
+          className="bg-primary hover:bg-primary/90"
           onClick={openAdd}
         >
           <Plus className="w-4 h-4 mr-1" /> Tambah
@@ -133,14 +133,14 @@ export default function AdminUnitKerjaPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-gray-400">
+                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground/60">
                     Memuat...
                   </TableCell>
                 </TableRow>
               ) : items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-gray-400">
-                    <Building2 className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground/60">
+                    <Building2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
                     Belum ada unit kerja
                   </TableCell>
                 </TableRow>
@@ -156,12 +156,12 @@ export default function AdminUnitKerjaPage() {
                           size="icon-sm"
                           onClick={() => openEdit(item)}
                         >
-                          <Pencil className="w-4 h-4 text-gray-500" />
+                          <Pencil className="w-4 h-4 text-muted-foreground/60" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDelete(item.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -195,7 +195,7 @@ export default function AdminUnitKerjaPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-primary hover:bg-primary/90"
               onClick={handleSave}
               disabled={saving}
             >

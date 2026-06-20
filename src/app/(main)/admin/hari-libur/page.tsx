@@ -150,12 +150,12 @@ export default function AdminHariLiburPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Hari Libur Nasional</h1>
+        <h1 className="text-xl font-bold text-foreground">Hari Libur Nasional</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="border-emerald-200 text-emerald-700"
+            className="border-accent text-accent-foreground"
             onClick={handleSync}
             disabled={syncing}
           >
@@ -164,7 +164,7 @@ export default function AdminHariLiburPage() {
           </Button>
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-primary hover:bg-primary/90"
             onClick={() => setDialogOpen(true)}
           >
             <Plus className="w-4 h-4 mr-1" /> Tambah
@@ -216,13 +216,13 @@ export default function AdminHariLiburPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-400">
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground/60">
                       <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-400">
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground/60">
                       Belum ada data hari libur. Klik "Sync Libur Nasional" untuk mengambil data dari API.
                     </TableCell>
                   </TableRow>
@@ -231,11 +231,11 @@ export default function AdminHariLiburPage() {
                     <TableRow key={item.id}>
                       <TableCell className="text-center text-muted-foreground">{i + 1}</TableCell>
                       <TableCell>
-                        <span className={isWeekend(item.tanggal) ? "text-red-500" : ""}>
+                        <span className={isWeekend(item.tanggal) ? "text-destructive" : ""}>
                           {formatDate(item.tanggal)}
                         </span>
                         {isWeekend(item.tanggal) && (
-                          <Badge variant="outline" className="ml-2 text-[10px] text-red-400 border-red-200">
+                          <Badge variant="outline" className="ml-2 text-[10px] text-destructive border-destructive/30">
                             Minggu
                           </Badge>
                         )}
@@ -245,7 +245,7 @@ export default function AdminHariLiburPage() {
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDelete(item.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -287,7 +287,7 @@ export default function AdminHariLiburPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-primary hover:bg-primary/90"
               onClick={handleAdd}
               disabled={saving}
             >

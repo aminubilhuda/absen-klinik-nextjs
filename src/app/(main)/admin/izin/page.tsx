@@ -69,9 +69,9 @@ export default function AdminIzinPage() {
   );
 
   const statusBadge = (s: string) => {
-    if (s === "APPROVED") return "bg-emerald-100 text-emerald-700";
-    if (s === "REJECTED") return "bg-red-100 text-red-600";
-    return "bg-amber-100 text-amber-700";
+    if (s === "APPROVED") return "bg-accent/30 text-accent-foreground";
+    if (s === "REJECTED") return "bg-destructive/10 text-destructive";
+    return "bg-chart-3/20 text-chart-3";
   };
 
   function formatDate(d: string) {
@@ -85,7 +85,7 @@ export default function AdminIzinPage() {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 text-xs text-emerald-600 hover:underline"
+        className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
       >
         {isPdf ? (
           <FileText className="w-3.5 h-3.5" />
@@ -99,10 +99,10 @@ export default function AdminIzinPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Pengajuan Izin</h1>
+      <h1 className="text-xl font-bold text-foreground">Pengajuan Izin</h1>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
         <Input
           placeholder="Cari..."
           value={search}
@@ -119,7 +119,7 @@ export default function AdminIzinPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm">{leave.user.nama}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className="bg-emerald-50 text-emerald-700 border-0 text-xs">
+                    <Badge className="bg-accent/30 text-accent-foreground border-0 text-xs">
                       {leave.kategoriAbsensi?.kode || "-"}
                     </Badge>
                     <Badge className={`${statusBadge(leave.status)} border-0 text-xs`}>{leave.status}</Badge>
@@ -140,15 +140,15 @@ export default function AdminIzinPage() {
                   </Button>
                 )}
               </div>
-              <p className="text-sm text-gray-600">{leave.alasan}</p>
+              <p className="text-sm text-muted-foreground">{leave.alasan}</p>
               <div className="flex items-center gap-3 mt-1">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground/60">
                   {formatDate(leave.tanggalMulai)} — {formatDate(leave.tanggalAkhir)}
                 </p>
                 {leave.lampiranUrl && <LampiranPreview url={leave.lampiranUrl} />}
               </div>
               {leave.catatanAdmin && (
-                <p className="text-xs text-gray-500 mt-2 italic">
+                <p className="text-xs text-muted-foreground/80 mt-2 italic">
                   Catatan: {leave.catatanAdmin}
                 </p>
               )}
@@ -167,19 +167,19 @@ export default function AdminIzinPage() {
               <p className="text-sm">
                 <strong>{selected.user.nama}</strong> — {selected.kategoriAbsensi?.kode || "-"} ({selected.kategoriAbsensi?.keterangan || ""})
               </p>
-              <p className="text-sm text-gray-600">{selected.alasan}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-muted-foreground">{selected.alasan}</p>
+              <p className="text-xs text-muted-foreground/60">
                 {formatDate(selected.tanggalMulai)} — {formatDate(selected.tanggalAkhir)}
               </p>
               {selected.lampiranUrl && (
                 <div className="pt-1">
-                  <p className="text-xs text-gray-500 mb-1">Lampiran:</p>
+                  <p className="text-xs text-muted-foreground/80 mb-1">Lampiran:</p>
                   {selected.lampiranUrl.endsWith(".pdf") ? (
                     <a
                       href={selected.lampiranUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-emerald-600 hover:underline"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
                     >
                       <FileText className="w-4 h-4" /> Buka Lampiran
                     </a>
@@ -202,14 +202,14 @@ export default function AdminIzinPage() {
               />
               <div className="flex gap-2">
                 <Button
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                  className="flex-1 bg-primary hover:bg-primary/90"
                   onClick={() => handleReview(selected.id, "APPROVED")}
                 >
                   <CheckCircle className="w-4 h-4 mr-1" /> Setujui
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                  className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
                   onClick={() => handleReview(selected.id, "REJECTED")}
                 >
                   <XCircle className="w-4 h-4 mr-1" /> Tolak

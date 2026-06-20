@@ -31,7 +31,7 @@ export default function LoginPage() {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -69,14 +69,14 @@ export default function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 mb-2">
-          <LogIn className="w-8 h-8 text-emerald-600" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/30 mb-2">
+          <LogIn className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold text-emerald-900">{appName}</h1>
-        <p className="text-sm text-gray-500">Masuk untuk melanjutkan</p>
+        <h1 className="text-2xl font-bold text-foreground">{appName}</h1>
+        <p className="text-sm text-muted-foreground">Masuk untuk melanjutkan</p>
       </div>
 
-      <Card className="border-0 shadow-lg shadow-emerald-100/50">
+      <Card className="border-0 shadow-lg shadow-primary/10">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Masuk</CardTitle>
           <CardDescription>Masukkan email dan password Anda</CardDescription>
@@ -112,7 +112,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -120,12 +120,12 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 p-3 rounded-lg">{error}</div>
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">{error}</div>
             )}
 
             <Button
               type="submit"
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-base"
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-base"
               disabled={loading}
             >
               {loading ? "Memproses..." : "Masuk"}
@@ -133,9 +133,9 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="justify-center pb-6">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Belum punya akun?{" "}
-            <Link href="/register" className="text-emerald-600 font-medium hover:underline">
+            <Link href="/register" className="text-primary font-medium hover:underline">
               Daftar
             </Link>
           </p>
