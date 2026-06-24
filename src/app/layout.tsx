@@ -1,16 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Providers from "@/components/providers";
 import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
-const geistSans = Geist({
-  subsets: ["latin"],
+const geistSans = localFont({
+  src: [
+    { path: "../../public/fonts/geist-sans/Geist-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/geist-sans/Geist-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../public/fonts/geist-sans/Geist-SemiBold.woff2", weight: "600", style: "normal" },
+    { path: "../../public/fonts/geist-sans/Geist-Bold.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-geist-sans",
 });
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
+const geistMono = localFont({
+  src: [
+    { path: "../../public/fonts/geist-mono/GeistMono-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/geist-mono/GeistMono-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../public/fonts/geist-mono/GeistMono-Bold.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-geist-mono",
 });
 
